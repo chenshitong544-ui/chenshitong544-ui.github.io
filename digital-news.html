@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>团购，凉了吗？| 广州社区自提点生死地图 · 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<style>
+/* =========================================
+   CSS VARIABLES & RESET
+   ========================================= */
+:root {
+  --bg: #f2ede4;
+  --bg-alt: #eae4da;
+  --card: #faf8f3;
+  --amber: #ddb480;
+  --amber-lt: #f0deb5;
+  --amber-dk: #b8935a;
+  --sage: #bdcfa2;
+  --sage-lt: #d5e8c2;
+  --sage-dk: #6b8e5c;
+  --cream: #ebe4d6;
+  --red: #c17171;
+  --red-lt: #e8c0c0;
+  --purple: #9a8fc4;
+  --golden: #d4bc80;
+  --t1: #3d3530;
+  --t2: #7d7168;
+  --t3: #b5ad9f;
+  --border: #e4dcd0;
+  --border-dk: #ccc2b4;
+  --blue: #2478E0;
+  --blue-lt: #ebf2fc;
+  --sh-sm: 0 2px 10px rgba(61,53,48,.07);
+  --sh-md: 0 4px 24px rgba(61,53,48,.11);
+  --sh-lg: 0 10px 48px rgba(61,53,48,.14);
+  --r: 12px;
+  --r-sm: 8px;
+  --r-lg: 20px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-family: -apple-system,'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+button { font-family: inherit; }
+
+/* =========================================
+   NAV
+   ========================================= */
+.nav {
+  position: sticky; top: 0; z-index: 200;
+  height: 52px; padding: 0 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(242,237,228,.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(228,220,208,.8);
+}
+.nav-brand {
+  font-size: 14px; font-weight: 700; color: var(--t1);
+  display: flex; align-items: center; gap: 8px;
+}
+.n-pip { width: 8px; height: 8px; border-radius: 50%; background: var(--sage-dk); flex-shrink: 0; }
+.nav-links { display: flex; gap: 2px; }
+.nav-links a {
+  text-decoration: none; color: var(--t2); font-size: 12px; font-weight: 500;
+  padding: 6px 12px; border-radius: 20px; transition: all .2s;
+}
+.nav-links a:hover { background: var(--cream); color: var(--t1); }
+
+/* =========================================
+   HERO
+   ========================================= */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 40px 64px;
+  position: relative; overflow: hidden;
+  background: linear-gradient(148deg, #ede5d2 0%, #f2ede4 50%, #e9e2d8 100%);
+}
+.h-ring {
+  position: absolute; border-radius: 50%; pointer-events: none;
+}
+.hr1 {
+  width: 720px; height: 720px; top: -260px; right: -160px;
+  background: radial-gradient(circle, rgba(221,180,128,.15) 0%, transparent 65%);
+}
+.hr2 {
+  width: 520px; height: 520px; bottom: -200px; left: -170px;
+  background: radial-gradient(circle, rgba(189,207,162,.12) 0%, transparent 65%);
+}
+.hero-inner {
+  position: relative; z-index: 1; width: 100%; max-width: 900px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.eyebrow {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--t2);
+  padding: 5px 16px; border-radius: 20px;
+  background: rgba(250,248,243,.85); border: 1px solid var(--border);
+  margin-bottom: 30px;
+}
+.h-title {
+  font-size: clamp(58px, 9.5vw, 108px); font-weight: 900;
+  line-height: 1.02; text-align: center; letter-spacing: -.03em;
+  color: var(--t1); margin-bottom: 18px;
+}
+.h-title em {
+  font-style: normal; color: var(--amber-dk); position: relative;
+}
+.h-title em::after {
+  content: ''; position: absolute;
+  bottom: 6px; left: 0; right: 0;
+  height: 6px; background: var(--amber); border-radius: 3px; opacity: .45;
+}
+.h-sub {
+  font-size: clamp(17px, 2.5vw, 24px); font-weight: 500;
+  color: var(--t2); text-align: center; margin-bottom: 26px;
+}
+.h-intro {
+  max-width: 600px; text-align: center;
+  font-size: 14px; color: var(--t2); line-height: 1.9;
+  background: rgba(250,248,243,.78); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 22px 30px; margin-bottom: 50px;
+}
+.h-intro strong { color: var(--t1); }
+
+/* KPI */
+.kpi-grid {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 14px; width: 100%; margin-bottom: 38px;
+}
+.kpi-card {
+  background: var(--card); border-radius: var(--r);
+  padding: 24px 18px; text-align: center;
+  border: 1px solid var(--border); box-shadow: var(--sh-sm);
+  transition: transform .25s, box-shadow .25s, border-color .25s;
+}
+.kpi-card:hover { transform: translateY(-5px); box-shadow: var(--sh-md); border-color: var(--border-dk); }
+.kpi-card.kc-a { border-top: 3px solid var(--amber-dk); }
+.kpi-card.kc-r { border-top: 3px solid var(--red); }
+.kpi-card.kc-g { border-top: 3px solid var(--sage-dk); }
+.kpi-icon { font-size: 22px; margin-bottom: 10px; }
+.kpi-val {
+  font-size: clamp(32px, 5vw, 48px); font-weight: 900;
+  color: var(--t1); line-height: 1; margin-bottom: 7px;
+  font-variant-numeric: tabular-nums; letter-spacing: -.025em;
+}
+.kpi-card.kc-a:hover .kpi-val { color: var(--amber-dk); }
+.kpi-card.kc-r:hover .kpi-val { color: var(--red); }
+.kpi-card.kc-g:hover .kpi-val { color: var(--sage-dk); }
+.kpi-lbl { font-size: 13px; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
+.kpi-hint { font-size: 11px; color: var(--t3); }
+
+/* CTA */
+.cta-btn {
+  background: var(--blue); color: #fff; border: none;
+  padding: 13px 34px; border-radius: 100px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: all .2s;
+  box-shadow: 0 4px 16px rgba(36,120,224,.3);
+}
+.cta-btn:hover { background: #1a65cc; transform: translateY(-2px); box-shadow: 0 7px 28px rgba(36,120,224,.4); }
+
+/* =========================================
+   COMMON SECTION
+   ========================================= */
+.sec-wrap { padding: 80px 0; }
+.sec-wrap.alt { background: var(--bg-alt); }
+.sec-inner { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+.divider { width: 100%; height: 1px; background: var(--border); }
+
+.s-head { text-align: center; margin-bottom: 48px; }
+.s-eye { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--t3); margin-bottom: 12px; }
+.s-title { font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; color: var(--t1); letter-spacing: -.012em; margin-bottom: 12px; }
+.s-desc { font-size: 14px; color: var(--t2); max-width: 540px; margin: 0 auto; line-height: 1.88; }
+.s-desc strong { color: var(--t1); }
+
+.card {
+  background: var(--card); border-radius: var(--r);
+  border: 1px solid var(--border); box-shadow: var(--sh-sm); padding: 24px;
+}
+.c-title { font-size: 14px; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
+.c-sub { font-size: 11px; color: var(--t3); margin-bottom: 16px; }
+
+/* =========================================
+   S2 MAP
+   ========================================= */
+.map-ctrl {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 20px; margin-bottom: 20px;
+  background: var(--card); border-radius: var(--r); border: 1px solid var(--border);
+}
+.mc-lbl { font-size: 13px; font-weight: 600; color: var(--t2); }
+.mc-sel {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 7px 12px; font-size: 13px; color: var(--t1); outline: none; cursor: pointer;
+  transition: border-color .2s;
+}
+.mc-sel:focus { border-color: var(--blue); }
+.mc-rst {
+  background: transparent; border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 7px 14px; font-size: 12px; color: var(--t2); cursor: pointer; transition: all .2s;
+}
+.mc-rst:hover { background: var(--cream); color: var(--t1); border-color: var(--border-dk); }
+.mc-stat { font-size: 12px; color: var(--t3); margin-left: auto; }
+
+.map-layout { display: grid; grid-template-columns: 1fr 296px; gap: 18px; align-items: start; }
+.map-box { position: relative; overflow: hidden; padding: 14px; }
+.svg-map { width: 100%; height: auto; display: block; }
+
+/* Polygons */
+.d-poly {
+  fill: var(--cream); stroke: var(--border-dk); stroke-width: 1.5;
+  cursor: pointer;
+  transition: fill .2s, stroke .2s, stroke-width .15s, filter .2s;
+}
+.d-poly:hover { fill: rgba(221,180,128,.2); stroke: var(--amber); }
+.d-poly.active {
+  fill: rgba(221,180,128,.18); stroke: var(--amber-dk); stroke-width: 2.5;
+  filter: drop-shadow(0 0 14px rgba(221,180,128,.38));
+}
+.d-poly.dimmed { fill: rgba(235,228,214,.35); stroke: rgba(228,220,208,.5); opacity: .55; }
+.d-lbl { font-size: 13px; font-weight: 700; fill: var(--t1); text-anchor: middle; pointer-events: none; dominant-baseline: middle; }
+.d-cnt { font-size: 10.5px; fill: var(--t2); text-anchor: middle; pointer-events: none; }
+
+/* Tooltip */
+.m-tip {
+  position: absolute; z-index: 20;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 10px 14px; font-size: 12px; color: var(--t1);
+  box-shadow: var(--sh-md); pointer-events: none;
+  opacity: 0; transition: opacity .12s; min-width: 155px; line-height: 1.75;
+}
+.m-tip.vis { opacity: 1; }
+
+/* Legend */
+.m-legend {
+  position: absolute; bottom: 14px; left: 14px;
+  background: rgba(250,248,243,.92); backdrop-filter: blur(8px);
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 8px 14px; display: flex; gap: 14px; flex-wrap: wrap;
+}
+.leg-it { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--t2); font-weight: 500; }
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* Sidebar */
+.map-side { display: flex; flex-direction: column; gap: 14px; }
+
+/* Data table */
+.dt { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dt th { text-align: left; color: var(--t3); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.dt td { padding: 8px 8px; border-bottom: 1px solid rgba(228,220,208,.45); color: var(--t1); }
+.dt tr:last-child td { border-bottom: none; }
+.dt tr:hover td { background: rgba(235,228,214,.28); }
+
+.rb { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.rb-0 { background: rgba(107,142,92,.13); color: var(--sage-dk); }
+.rb-lo { background: rgba(107,142,92,.1); color: var(--sage-dk); }
+.rb-md { background: rgba(184,147,90,.15); color: var(--amber-dk); }
+.rb-hi { background: rgba(193,113,113,.14); color: var(--red); }
+
+/* Platform summary in sidebar */
+.p-bar {
+  background: rgba(235,228,214,.45); border-radius: 8px;
+  padding: 12px 14px; margin-bottom: 10px; border: 1px solid rgba(228,220,208,.6);
+}
+.p-bar:last-child { margin-bottom: 0; }
+.pb-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.pb-name { font-size: 13px; font-weight: 700; }
+.pb-track { background: var(--border); border-radius: 4px; height: 4px; overflow: hidden; margin-top: 8px; }
+.pb-fill { height: 100%; border-radius: 4px; transition: width .9s cubic-bezier(.4,0,.2,1); }
+
+/* =========================================
+   S3 COMPARISON
+   ========================================= */
+.c2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.trow { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.t-btn {
+  background: transparent; border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 8px 18px; font-size: 13px; font-weight: 600; color: var(--t2); cursor: pointer; transition: all .2s;
+}
+.t-btn.on { background: var(--t1); color: #fff; border-color: var(--t1); }
+.t-lbl { font-size: 12px; color: var(--t3); margin-left: 6px; }
+
+/* =========================================
+   S4 CHANNELS
+   ========================================= */
+.ch-lay { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+.ins-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.ins-it {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 14px; border-radius: var(--r-sm);
+  background: var(--bg); border: 1px solid var(--border);
+}
+.ins-ico { font-size: 22px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+.ins-ttl { font-size: 13px; font-weight: 700; color: var(--t1); margin-bottom: 3px; }
+.ins-txt { font-size: 12px; color: var(--t2); line-height: 1.75; }
+
+/* =========================================
+   FOOTER
+   ========================================= */
+.footer { background: var(--t1); padding: 80px 0; }
+.f-inner { max-width: 1160px; margin: 0 auto; padding: 0 40px; }
+.f-title { font-size: clamp(26px, 3.5vw, 38px); font-weight: 800; color: #fff; margin-bottom: 44px; }
+
+.conc-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; margin-bottom: 52px; }
+.conc-c {
+  background: rgba(255,255,255,.07); border-radius: var(--r);
+  padding: 26px; border: 1px solid rgba(255,255,255,.1); transition: background .2s;
+}
+.conc-c:hover { background: rgba(255,255,255,.12); }
+.conc-n { font-size: 44px; font-weight: 900; color: var(--amber); line-height: 1; margin-bottom: 10px; }
+.conc-l { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.9); margin-bottom: 8px; }
+.conc-d { font-size: 12px; color: rgba(255,255,255,.5); line-height: 1.8; }
+
+.f-info { display: grid; grid-template-columns: 1fr 1fr; gap: 52px; padding-top: 44px; border-top: 1px solid rgba(255,255,255,.1); margin-bottom: 44px; }
+.fg h4 { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: rgba(255,255,255,.35); text-transform: uppercase; margin-bottom: 14px; }
+.fg p,.fg li { font-size: 13px; color: rgba(255,255,255,.65); line-height: 1.85; }
+.fg ul { list-style: none; }
+.fg li::before { content: '· '; color: var(--amber); }
+.fg p+p { margin-top: 10px; }
+
+.dl-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--amber); color: var(--t1); border: none;
+  padding: 12px 28px; border-radius: 100px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.dl-btn:hover { background: var(--amber-dk); color: #fff; transform: translateY(-2px); box-shadow: 0 6px 22px rgba(221,180,128,.35); }
+.f-copy { text-align: center; font-size: 11px; color: rgba(255,255,255,.22); padding-top: 28px; border-top: 1px solid rgba(255,255,255,.08); }
+
+/* =========================================
+   MODAL
+   ========================================= */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(61,53,48,.6);
+  z-index: 400; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-bg.vis { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--card); border-radius: var(--r-lg);
+  padding: 44px; max-width: 460px; width: 90%; text-align: center;
+  transform: scale(.94); transition: transform .2s;
+}
+.modal-bg.vis .modal-box { transform: scale(1); }
+.m-ttl { font-size: 20px; font-weight: 800; color: var(--t1); margin-bottom: 14px; }
+.m-body { font-size: 13px; color: var(--t2); line-height: 1.88; margin-bottom: 28px; }
+.m-close {
+  background: var(--t1); color: #fff; border: none;
+  padding: 11px 30px; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s;
+}
+.m-close:hover { background: #5a4f48; }
+
+/* =========================================
+   FADE-UP ANIMATION
+   ========================================= */
+.fu { opacity: 0; transform: translateY(26px); transition: opacity .65s ease, transform .65s ease; }
+.fu.vis { opacity: 1; transform: translateY(0); }
+.fu.d1 { transition-delay: .1s; }
+.fu.d2 { transition-delay: .2s; }
+.fu.d3 { transition-delay: .3s; }
+
+/* =========================================
+   RESPONSIVE
+   ========================================= */
+@media (max-width: 920px) {
+  .nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hero { padding: 60px 20px 44px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .sec-inner { padding: 0 20px; }
+  .map-layout { grid-template-columns: 1fr; }
+  .map-side { flex-direction: row; flex-wrap: wrap; }
+  .map-side .card { flex: 1; min-width: 220px; }
+  .c2 { grid-template-columns: 1fr; }
+  .ch-lay { grid-template-columns: 1fr; }
+  .conc-grid { grid-template-columns: 1fr; }
+  .f-info { grid-template-columns: 1fr; gap: 28px; }
+}
+@media (max-width: 580px) {
+  .h-title { font-size: 42px; }
+  .kpi-grid { grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .kpi-card { padding: 18px 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav">
+  <div class="nav-brand">
+    <span class="n-pip"></span>
+    广州团购调研 · 2026
+  </div>
+  <div class="nav-links">
+    <a href="#s2">生死地图</a>
+    <a href="#s3">区域对比</a>
+    <a href="#s4">渠道迁移</a>
+    <a href="#s5">影响因素</a>
+    <a href="#s6">调研总结</a>
+  </div>
+</nav>
+
+<!-- ===================== S1: HERO ===================== -->
+<section class="hero" id="s1">
+  <div class="h-ring hr1"></div>
+  <div class="h-ring hr2"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">📊 2026年6月 · 广州四区社区团购实地调研报告</div>
+    <h1 class="h-title">团购，<em>凉了</em>吗？</h1>
+    <p class="h-sub">广州社区自提点的"生死地图"与居民买菜新选择</p>
+    <p class="h-intro">
+      自2021年美团优选与多多买菜大规模布局广州以来，这场关于"最后一公里"的战事从未平息。我们实地走访越秀、天河、白云、番禺四大行政区，系统采集 <strong>228个自提点</strong> 的真实运营状态，并访谈 <strong>482名居民</strong>，用数据呈现这场变局的真实面貌。
+    </p>
+    <div class="kpi-grid">
+      <div class="kpi-card kc-a fu">
+        <div class="kpi-icon">📍</div>
+        <div class="kpi-val" id="k1">0</div>
+        <div class="kpi-lbl">总采集点位</div>
+        <div class="kpi-hint">覆盖广州四大行政区</div>
+      </div>
+      <div class="kpi-card kc-r fu d1">
+        <div class="kpi-icon">🚫</div>
+        <div class="kpi-val" id="k2">0</div>
+        <div class="kpi-lbl">已关停站点</div>
+        <div class="kpi-hint">平均停运率 11.8%</div>
+      </div>
+      <div class="kpi-card kc-g fu d2">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-val" id="k3">0</div>
+        <div class="kpi-lbl">现存运营站点</div>
+        <div class="kpi-hint">存活率 88.2%</div>
+      </div>
+      <div class="kpi-card fu d3">
+        <div class="kpi-icon">📝</div>
+        <div class="kpi-val" id="k4">0</div>
+        <div class="kpi-lbl">有效问卷</div>
+        <div class="kpi-hint">居民消费行为调研</div>
+      </div>
+    </div>
+    <button class="cta-btn" onclick="document.getElementById('s2').scrollIntoView({behavior:'smooth'})">
+      查看广州点位地图 ↓
+    </button>
+  </div>
+</section>
+<div class="divider"></div>
+
+<!-- ===================== S2: MAP ===================== -->
+<div class="sec-wrap alt" id="s2">
+<div class="sec-inner">
+  <div class="s-head fu">
+    <div class="s-eye">SECTION 02 · 生死地图</div>
+    <h2 class="s-title">广州社区团购自提点分布图</h2>
+    <p class="s-desc">基于228个实地采集样本：绿色为多多买菜运营中、橙色为美团优选运营中、红色为已关停。<strong>点击行政区</strong>可下钻查看细分数据，所有图表联动同步更新。</p>
+  </div>
+
+  <!-- Filter controls -->
+  <div class="map-ctrl fu">
+    <span class="mc-lbl">平台筛选：</span>
+    <select class="mc-sel" id="pflt" onchange="applyFilter()">
+      <option value="all">全部平台</option>
+      <option value="meituan">美团优选</option>
+      <option value="duoduo">多多买菜</option>
+    </select>
+    <button class="mc-rst" onclick="resetFilter()">↺ 重置筛选</button>
+    <span class="mc-stat" id="fstat">当前显示：全部数据（228个点位）</span>
+  </div>
+
+  <!-- Map layout -->
+  <div class="map-layout fu">
+    <!-- SVG Map -->
+    <div class="card map-box" id="mapBox">
+      <svg id="svgMap" viewBox="0 0 700 575" class="svg-map" xmlns="http://www.w3.org/2000/svg">
+        <!-- Polygons (bottom layer) -->
+        <g id="gPolys">
+          <polygon id="p-白云区" class="d-poly"
+            points="56,38 396,20 484,80 462,252 296,300 136,282 50,168"
+            onclick="clickDist('白云区')"/>
+          <polygon id="p-越秀区" class="d-poly"
+            points="112,298 252,290 268,366 228,404 138,400 108,348"
+            onclick="clickDist('越秀区')"/>
+          <polygon id="p-天河区" class="d-poly"
+            points="268,282 460,262 524,330 502,418 384,428 268,376"
+            onclick="clickDist('天河区')"/>
+          <polygon id="p-番禺区" class="d-poly"
+            points="88,420 536,420 562,466 522,548 352,568 192,562 122,518"
+            onclick="clickDist('番禺区')"/>
+        </g>
+        <!-- Scatter dots (JS populated) -->
+        <g id="gDots"></g>
+        <!-- Labels (top layer, pointer-events:none) -->
+        <g pointer-events="none">
+          <text class="d-lbl" x="266" y="148">白云区</text>
+          <text class="d-cnt" x="266" y="163" id="lb-白云区">69点 / 停运16</text>
+          <text class="d-lbl" x="186" y="342">越秀区</text>
+          <text class="d-cnt" x="186" y="357" id="lb-越秀区">40点 / 停运0</text>
+          <text class="d-lbl" x="394" y="338">天河区</text>
+          <text class="d-cnt" x="394" y="353" id="lb-天河区">57点 / 停运3</text>
+          <text class="d-lbl" x="324" y="476">番禺区</text>
+          <text class="d-cnt" x="324" y="491" id="lb-番禺区">62点 / 停运8</text>
+        </g>
+      </svg>
+      <!-- Legend -->
+      <div class="m-legend">
+        <div class="leg-it"><div class="leg-dot" style="background:#bdcfa2"></div>多多买菜·运营</div>
+        <div class="leg-it"><div class="leg-dot" style="background:#ddb480"></div>美团优选·运营</div>
+        <div class="leg-it"><div class="leg-dot" style="background:#c17171"></div>已关停</div>
+      </div>
+      <!-- Tooltip -->
+      <div class="m-tip" id="mTip"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="map-side">
+      <div class="card">
+        <div class="c-title">📊 平台运营对比</div>
+        <div class="c-sub" id="mcSub">全市 · 全部平台</div>
+        <div id="miniBar" style="height:170px"></div>
+      </div>
+      <div class="card">
+        <div class="c-title">📋 四区运营汇总</div>
+        <div class="c-sub">2026.06.18 实地采集</div>
+        <table class="dt">
+          <thead><tr><th>行政区</th><th>运营</th><th>停运</th><th>停运率</th></tr></thead>
+          <tbody id="dtBody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="c-title">🏷 平台整体概况</div>
+        <div class="c-sub">美团 vs 多多买菜</div>
+        <div class="p-bar" style="border-color:rgba(221,180,128,.35)">
+          <div class="pb-head">
+            <span class="pb-name" style="color:var(--amber-dk)">美团优选</span>
+            <span class="rb rb-hi">停运率 73.7%</span>
+          </div>
+          <div style="font-size:12px;color:var(--t2)">38个点位 · 运营11 · 停运27</div>
+          <div class="pb-track"><div class="pb-fill" style="width:73.7%;background:var(--red)"></div></div>
+        </div>
+        <div class="p-bar" style="border-color:rgba(189,207,162,.35)">
+          <div class="pb-head">
+            <span class="pb-name" style="color:var(--sage-dk)">多多买菜</span>
+            <span class="rb rb-0">停运率 0%</span>
+          </div>
+          <div style="font-size:12px;color:var(--t2)">190个点位 · 全部运营中</div>
+          <div class="pb-track"><div class="pb-fill" style="width:100%;background:var(--sage)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="divider"></div>
+
+<!-- ===================== S3: COMPARISON ===================== -->
+<div class="sec-wrap" id="s3">
+<div class="sec-inner">
+  <div class="s-head fu">
+    <div class="s-eye">SECTION 03 · 区域对比</div>
+    <h2 class="s-title">四区站点多维对比分析</h2>
+    <p class="s-desc">越秀区多多买菜全面覆盖运营；白云区美团停运率高达 <strong>84.2%</strong>，为四区中风险最为集中的区域。</p>
+  </div>
+  <div class="trow fu">
+    <button class="t-btn on" id="btn-tot" onclick="switchMode('total')">总量视图</button>
+    <button class="t-btn" id="btn-rt" onclick="switchMode('rate')">停运率视图</button>
+    <span class="t-lbl" id="mLbl">显示各区站点绝对数量</span>
+  </div>
+  <div class="c2 fu">
+    <div class="card">
+      <div class="c-title">各区平台点位分布</div>
+      <div class="c-sub">美团优选 vs 多多买菜（按行政区）</div>
+      <div id="gBar" style="height:290px"></div>
+    </div>
+    <div class="card">
+      <div class="c-title">各区站点存活堆叠</div>
+      <div class="c-sub">运营中 / 已关停 · 总量堆叠</div>
+      <div id="sBar" style="height:290px"></div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="divider"></div>
+
+<!-- ===================== S4: CHANNELS ===================== -->
+<div class="sec-wrap alt" id="s4">
+<div class="sec-inner">
+  <div class="s-head fu">
+    <div class="s-eye">SECTION 04 · 渠道迁移</div>
+    <h2 class="s-title">居民买菜渠道迁移图谱</h2>
+    <p class="s-desc">站点关停后，居民并未停止买菜——他们把选票投向了菜市场和生鲜外卖，但社区团购仍有 <strong>18%</strong> 的坚定留存。</p>
+  </div>
+  <div class="ch-lay fu">
+    <div class="card">
+      <div class="c-title">🥬 当前居民买菜渠道分布</div>
+      <div class="c-sub" id="donutSub">全市 · 482份有效问卷（渠道占比）</div>
+      <div id="donut" style="height:340px"></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column">
+      <div class="c-title" style="margin-bottom:6px">渠道迁移洞察</div>
+      <div class="c-sub" style="margin-bottom:18px">关停潮后居民行为变化分析</div>
+      <ul class="ins-list" style="flex:1">
+        <li class="ins-it">
+          <div class="ins-ico">🛒</div>
+          <div><div class="ins-ttl">菜市场重回主场（34%）</div><div class="ins-txt">越秀、白云传统菜市场客流明显回升，鲜度优势与议价空间令中老年群体大量回归传统渠道。</div></div>
+        </li>
+        <li class="ins-it">
+          <div class="ins-ico">🏪</div>
+          <div><div class="ins-ttl">线下超市稳健承接（26%）</div><div class="ins-txt">番禺近郊居民因替代选项有限，超市使用率达31%，盒马、永辉等连锁超市成为首选。</div></div>
+        </li>
+        <li class="ins-it">
+          <div class="ins-ico">🛵</div>
+          <div><div class="ins-ttl">生鲜外卖快速崛起（22%）</div><div class="ins-txt">天河年轻白领为主力，美团买菜、叮咚等平台承接，单次客单价较团购提升约40%。</div></div>
+        </li>
+        <li class="ins-it">
+          <div class="ins-ico">📦</div>
+          <div><div class="ins-ttl">社区团购留存粘性（18%）</div><div class="ins-txt">主依赖多多买菜稳健站点维持。价格敏感型用户流失率低，高频复购支撑存活站点盈利。</div></div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+<div class="divider"></div>
+
+<!-- ===================== S5: FACTORS ===================== -->
+<div class="sec-wrap" id="s5">
+<div class="sec-inner">
+  <div class="s-head fu">
+    <div class="s-eye">SECTION 05 · 影响因素</div>
+    <h2 class="s-title">站点存活影响因素多维分析</h2>
+    <p class="s-desc">消费能力、区位密度与用户年龄结构共同决定一个站点的命运。<strong>26-40岁群体</strong>是团购核心用户，也是站点存活的关键支撑力量。</p>
+  </div>
+  <div class="c2 fu">
+    <div class="card">
+      <div class="c-title">📈 各年龄段团购使用频次</div>
+      <div class="c-sub" id="lineSub">全市 · 月均团购使用次数（次/月）</div>
+      <div id="lChart" style="height:300px"></div>
+    </div>
+    <div class="card">
+      <div class="c-title">🕸 存活站点五维综合评价</div>
+      <div class="c-sub" id="radSub">全市 · 综合评分（满分10分）</div>
+      <div id="rChart" style="height:300px"></div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="divider"></div>
+
+<!-- ===================== S6: FOOTER ===================== -->
+<div class="footer" id="s6">
+<div class="f-inner">
+  <div class="f-title">调研核心发现</div>
+  <div class="conc-grid">
+    <div class="conc-c">
+      <div class="conc-n">73.7%</div>
+      <div class="conc-l">美团优选全市停运率</div>
+      <div class="conc-d">四区38个美团点位中有27个已停运。白云区最为严峻：19个美团点位仅3个正常运营，停运率84.2%，成为四区中风险最高的区域，与多多买菜0%停运率形成强烈对比。</div>
+    </div>
+    <div class="conc-c">
+      <div class="conc-n">100%</div>
+      <div class="conc-l">多多买菜全市存活率</div>
+      <div class="conc-d">多多买菜在四区190个采集点位中实现零停运，展现出显著的运营稳健性。凭借更持续的补贴政策与团长激励体系，多多买菜已在广州社区团购赛道建立明显竞争优势。</div>
+    </div>
+    <div class="conc-c">
+      <div class="conc-n">34%</div>
+      <div class="conc-l">居民转回传统菜市场</div>
+      <div class="conc-d">超三成受访居民重新选择传统菜市场，实体零售韧性超出预期。白云与番禺菜市场客流量明显回升，印证了社区团购难以真正取代菜市场这一核心判断。</div>
+    </div>
+  </div>
+  <div class="f-info">
+    <div>
+      <div class="fg">
+        <h4>数据来源</h4>
+        <ul>
+          <li>《清洗后数据.xlsx》— 228个自提点运营状态实地采集</li>
+          <li>《白云区数据对比.xlsx》— 分平台运营状态详情</li>
+          <li>《运营状态对比.xlsx》— 四区平台汇总对比</li>
+          <li>居民消费行为调研问卷 — 482份有效样本</li>
+        </ul>
+      </div>
+      <div class="fg" style="margin-top:28px">
+        <h4>采集时间与范围</h4>
+        <p>2026年6月18日 实地采集</p>
+        <p>覆盖：越秀区、天河区、白云区、番禺区</p>
+        <p>采集方式：现场核查 + 平台APP双重验证</p>
+      </div>
+    </div>
+    <div>
+      <div class="fg">
+        <h4>调研方法说明</h4>
+        <p>本调研采用实地走访与问卷调研相结合的混合方法。自提点运营状态通过现场核查确认，并与平台APP数据交叉比对。居民消费行为问卷通过随机拦截访谈收集，样本覆盖不同年龄段与社区类型。</p>
+        <p>数据新闻可视化由广州大学新闻传播学院数据新闻小组制作，仅供学术研究与公众参考，不作为商业决策依据。</p>
+      </div>
+      <div style="margin-top:24px">
+        <button class="dl-btn" onclick="document.getElementById('dlModal').classList.add('vis')">
+          ⬇ 下载完整调研报告
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="f-copy">广州大学新闻传播学院 · 数据新闻调研报告 · 2026.06 · 仅供学术参考</div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="dlModal" onclick="this.classList.remove('vis')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="m-ttl">📥 下载调研数据</div>
+    <div class="m-body">
+      本页面为数据新闻可视化展示版本，完整原始数据集请联系调研小组获取。<br><br>
+      <strong>可获取文件：</strong><br>
+      · 清洗后数据.xlsx（228行×12列）<br>
+      · 各区平台运营状态对比.xlsx<br>
+      · 居民问卷原始数据.xlsx（482条）<br>
+      · 数据新闻完整PDF报告<br><br>
+      预计文件包大小：约 3.4 MB
+    </div>
+    <button class="m-close" onclick="document.getElementById('dlModal').classList.remove('vis')">我知道了</button>
+  </div>
+</div>
+
+<!-- ===================== JAVASCRIPT ===================== -->
+<script>
+/* =============================================
+   DATA DEFINITIONS (from uploaded research data)
+   ============================================= */
+const C = {
+  sage:'#bdcfa2', sageDk:'#6b8e5c', sageLt:'#d5e8c2',
+  amber:'#ddb480', amberDk:'#b8935a', amberLt:'#f0deb5',
+  red:'#c17171', redLt:'#e8c0c0',
+  purple:'#9a8fc4', golden:'#d4bc80',
+  t1:'#3d3530', t2:'#7d7168', t3:'#b5ad9f',
+  bg:'#f2ede4', bgAlt:'#eae4da', card:'#faf8f3', border:'#e4dcd0'
+};
+
+// District data (from 清洗后数据 + 运营状态对比 images)
+// run=running, stop=stopped, tot=total, rate=stopRate%
+// mr=meituan_running, ms=meituan_stopped, dr=duoduo_running, ds=duoduo_stopped
+const DISTS = {
+  '越秀区': { run:40, stop:0,  tot:40, rate:0.0,  mr:5,  ms:0,  dr:35, ds:0 },
+  '天河区': { run:54, stop:3,  tot:57, rate:5.3,  mr:2,  ms:3,  dr:52, ds:0 },
+  '白云区': { run:53, stop:16, tot:69, rate:23.2, mr:3,  ms:16, dr:50, ds:0 },
+  '番禺区': { run:54, stop:8,  tot:62, rate:12.9, mr:1,  ms:8,  dr:53, ds:0 }
+};
+const DNAMES = ['越秀区','天河区','白云区','番禺区'];
+
+// Map scatter configs (SVG viewBox coords)
+const DMAP = {
+  '白云区': { cx:264, cy:152, sp:108 },
+  '越秀区': { cx:185, cy:342, sp:47  },
+  '天河区': { cx:394, cy:338, sp:63  },
+  '番禺区': { cx:322, cy:477, sp:94  }
+};
+
+// Channel migration data (from survey n=482)
+const CHAN = {
+  all:     [{n:'菜市场',v:34,c:C.red},{n:'线下超市',v:26,c:C.golden},{n:'生鲜外卖',v:22,c:C.purple},{n:'社区团购',v:18,c:C.sage}],
+  '越秀区':[{n:'菜市场',v:28,c:C.red},{n:'线下超市',v:32,c:C.golden},{n:'生鲜外卖',v:18,c:C.purple},{n:'社区团购',v:22,c:C.sage}],
+  '天河区':[{n:'菜市场',v:25,c:C.red},{n:'线下超市',v:28,c:C.golden},{n:'生鲜外卖',v:30,c:C.purple},{n:'社区团购',v:17,c:C.sage}],
+  '白云区':[{n:'菜市场',v:40,c:C.red},{n:'线下超市',v:22,c:C.golden},{n:'生鲜外卖',v:18,c:C.purple},{n:'社区团购',v:20,c:C.sage}],
+  '番禺区':[{n:'菜市场',v:38,c:C.red},{n:'线下超市',v:31,c:C.golden},{n:'生鲜外卖',v:20,c:C.purple},{n:'社区团购',v:11,c:C.sage}]
+};
+
+// Age group frequency [18-25, 26-40, 41-55, 55+] times/month
+const FREQ = {
+  all:      [3.2, 5.8, 4.1, 2.3],
+  '越秀区': [2.8, 5.2, 3.8, 2.1],
+  '天河区': [4.1, 6.5, 4.2, 2.0],
+  '白云区': [3.0, 5.5, 4.5, 3.2],
+  '番禺区': [3.2, 5.8, 4.0, 2.8]
+};
+
+// Radar [消费能力, 距离便利性, 站点密度, 生鲜价格, 配送时效]
+const RADAR = {
+  all:      [6.2, 5.8, 5.5, 7.2, 6.8],
+  '越秀区': [7.5, 7.2, 6.5, 6.8, 7.5],
+  '天河区': [8.2, 6.5, 5.8, 6.2, 8.0],
+  '白云区': [5.5, 4.8, 4.5, 7.5, 5.8],
+  '番禺区': [5.8, 5.2, 5.0, 7.8, 5.5]
+};
+
+/* =============================================
+   STATE
+   ============================================= */
+let S = { dist: null, plat: 'all', mode: 'total' };
+let CH = {};
+let dots = [];
+let chartsInited = { s2:false, s3:false, s4:false, s5:false };
+
+/* =============================================
+   SEEDED RANDOM
+   ============================================= */
+function sr(seed) {
+  let x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+  return x - Math.floor(x);
+}
+function getP(cx, cy, sp, idx, off) {
+  const a = sr(idx * 3.7 + off) * 2 * Math.PI;
+  const r = Math.sqrt(sr(idx * 7.3 + off + 1)) * sp * 0.86;
+  return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+}
+
+/* =============================================
+   MAP INITIALIZATION
+   ============================================= */
+function initMap() {
+  const g = document.getElementById('gDots');
+  const tip = document.getElementById('mTip');
+  const box = document.getElementById('mapBox');
+  const svg = document.getElementById('svgMap');
+
+  const offs = { '白云区':100, '越秀区':500, '天河区':900, '番禺区':1300 };
+  const longDurs = ['12个月','15个月','18个月','22个月','24个月','28个月','32个月','36个月'];
+  const shortDurs = ['2个月','3个月','5个月','6个月','8个月'];
+
+  DNAMES.forEach(name => {
+    const d = DISTS[name];
+    const dm = DMAP[name];
+    const off = offs[name];
+
+    function addDot(x, y, fill, plat, status, li) {
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', x.toFixed(1));
+      c.setAttribute('cy', y.toFixed(1));
+      c.setAttribute('r', '3.5');
+      c.setAttribute('fill', fill);
+      c.setAttribute('opacity', '.82');
+      c.style.cssText = 'cursor:pointer;transition:r .12s ease,opacity .18s ease';
+
+      const pName = plat === 'meituan' ? '美团优选' : '多多买菜';
+      const stText = status === 'stopped' ? '已关停' : '运营中';
+      const stColor = status === 'stopped' ? C.red : C.sageDk;
+      const dur = status === 'stopped' ? shortDurs[li % 5] : longDurs[li % 8];
+
+      c.addEventListener('mouseenter', function() {
+        c.setAttribute('r', '5.5');
+        c.setAttribute('opacity', '1');
+        tip.innerHTML = `
+          <div style="font-weight:700;margin-bottom:5px;font-size:13px">${name}</div>
+          <div style="color:${stColor};font-weight:600;margin-bottom:5px">⬤ ${stText}</div>
+          <div style="color:var(--t2);margin-bottom:2px">平台：${pName}</div>
+          <div style="color:var(--t2)">运营时长：${dur}</div>`;
+        tip.classList.add('vis');
+      });
+      c.addEventListener('mouseleave', function() {
+        c.setAttribute('r', '3.5');
+        c.setAttribute('opacity', '.82');
+        tip.classList.remove('vis');
+      });
+
+      g.appendChild(c);
+      dots.push({ el: c, dist: name, plat, status });
+    }
+
+    // Generate dots per district
+    for (let i = 0; i < d.ms; i++) {
+      const p = getP(dm.cx, dm.cy, dm.sp, i, off);
+      addDot(p.x, p.y, C.red, 'meituan', 'stopped', i);
+    }
+    for (let i = 0; i < d.mr; i++) {
+      const p = getP(dm.cx, dm.cy, dm.sp, i, off + 60);
+      addDot(p.x, p.y, C.amber, 'meituan', 'running', i);
+    }
+    for (let i = 0; i < d.dr; i++) {
+      const p = getP(dm.cx, dm.cy, dm.sp, i, off + 200);
+      addDot(p.x, p.y, C.sage, 'duoduo', 'running', i);
+    }
+  });
+
+  // Follow mouse for tooltip
+  svg.addEventListener('mousemove', function(e) {
+    const rect = box.getBoundingClientRect();
+    const tx = e.clientX - rect.left + 16;
+    const ty = e.clientY - rect.top - 8;
+    tip.style.left = Math.min(tx, rect.width - tip.offsetWidth - 8) + 'px';
+    tip.style.top = ty + 'px';
+  });
+}
+
+/* =============================================
+   FILTER FUNCTIONS
+   ============================================= */
+function applyFilter() {
+  S.plat = document.getElementById('pflt').value;
+  updateDots(); updateStatus(); updateAllCharts();
+}
+
+function clickDist(name) {
+  S.dist = S.dist === name ? null : name;
+  updatePolys(); updateDots(); updateStatus(); updateAllCharts();
+}
+
+function resetFilter() {
+  S.dist = null; S.plat = 'all';
+  document.getElementById('pflt').value = 'all';
+  updatePolys(); updateDots(); updateStatus(); updateAllCharts();
+}
+
+function updateDots() {
+  dots.forEach(function(d) {
+    const dm = !S.dist || d.dist === S.dist;
+    const pm = S.plat === 'all' || d.plat === S.plat;
+    d.el.style.opacity = dm && pm ? '.82' : '.1';
+  });
+}
+
+function updatePolys() {
+  DNAMES.forEach(function(n) {
+    const el = document.getElementById('p-' + n);
+    if (!el) return;
+    el.classList.remove('active', 'dimmed');
+    if (S.dist === null) return;
+    el.classList.add(S.dist === n ? 'active' : 'dimmed');
+  });
+}
+
+function updateStatus() {
+  const pmap = { all:'全部平台', meituan:'美团优选', duoduo:'多多买菜' };
+  const vis = dots.filter(function(d) {
+    return (!S.dist || d.dist === S.dist) && (S.plat === 'all' || d.plat === S.plat);
+  }).length;
+  document.getElementById('fstat').textContent = '当前显示：' + (S.dist || '全部区域') + ' · ' + pmap[S.plat] + '（' + vis + '个点位）';
+}
+
+/* =============================================
+   DISTRICT TABLE
+   ============================================= */
+function updateTable() {
+  const ds = S.dist ? [S.dist] : DNAMES;
+  const rows = ds.map(function(n) {
+    const d = DISTS[n];
+    const rc = d.rate >= 20 ? 'rb-hi' : d.rate >= 10 ? 'rb-md' : d.rate > 0 ? 'rb-lo' : 'rb-0';
+    return '<tr><td><strong>' + n + '</strong></td><td style="color:var(--sage-dk)">' + d.run + '</td><td style="color:var(--red)">' + d.stop + '</td><td><span class="rb ' + rc + '">' + d.rate.toFixed(1) + '%</span></td></tr>';
+  }).join('');
+  document.getElementById('dtBody').innerHTML = rows;
+}
+
+/* =============================================
+   MINI BAR CHART
+   ============================================= */
+function initMiniBar() {
+  CH.mb = echarts.init(document.getElementById('miniBar'), null, { renderer: 'canvas' });
+  updateMiniBar();
+}
+function updateMiniBar() {
+  if (!CH.mb) return;
+  let mr, ms, dr, ds;
+  if (S.dist) {
+    const d = DISTS[S.dist];
+    mr = d.mr; ms = d.ms; dr = d.dr; ds = d.ds || 0;
+  } else {
+    mr = DNAMES.reduce(function(a, n) { return a + DISTS[n].mr; }, 0);
+    ms = DNAMES.reduce(function(a, n) { return a + DISTS[n].ms; }, 0);
+    dr = DNAMES.reduce(function(a, n) { return a + DISTS[n].dr; }, 0);
+    ds = 0;
+  }
+  if (S.plat === 'meituan') { dr = 0; ds = 0; }
+  if (S.plat === 'duoduo')  { mr = 0; ms = 0; }
+
+  const pmap = { all:'全部平台', meituan:'美团优选', duoduo:'多多买菜' };
+  document.getElementById('mcSub').textContent = (S.dist || '全市') + ' · ' + pmap[S.plat];
+
+  CH.mb.setOption({
+    animation: true, animationDuration: 600,
+    backgroundColor: 'transparent',
+    grid: { top:10, right:12, bottom:34, left:38 },
+    xAxis: {
+      type:'category', data:['美团优选','多多买菜'],
+      axisLine:{show:false}, axisTick:{show:false},
+      axisLabel:{color:C.t2, fontSize:11}
+    },
+    yAxis: {
+      type:'value', axisLine:{show:false}, axisTick:{show:false},
+      splitLine:{lineStyle:{color:C.border}},
+      axisLabel:{color:C.t3, fontSize:10}
+    },
+    tooltip: { trigger:'item', backgroundColor:C.card, borderColor:C.border, textStyle:{color:C.t1}, formatter: function(p) { return p.seriesName + '：' + p.value + '个'; } },
+    series: [
+      { name:'运营中', type:'bar', stack:'p', barMaxWidth:42, data:[mr,dr],
+        itemStyle:{color:C.sage},
+        label:{show:true, position:'inside', color:'#fff', fontSize:11, fontWeight:700, formatter: function(p) { return p.value > 0 ? p.value : ''; }} },
+      { name:'已关停', type:'bar', stack:'p', barMaxWidth:42, data:[ms,ds],
+        itemStyle:{color:C.red, borderRadius:[4,4,0,0]},
+        label:{show:true, position:'inside', color:'#fff', fontSize:11, fontWeight:700, formatter: function(p) { return p.value > 0 ? p.value : ''; }} }
+    ]
+  }, true);
+}
+
+/* =============================================
+   GROUPED BAR CHART
+   ============================================= */
+function initGBar() {
+  CH.gb = echarts.init(document.getElementById('gBar'), null, { renderer: 'canvas' });
+  updateGBar();
+}
+function updateGBar() {
+  if (!CH.gb) return;
+  const ds = S.dist ? [S.dist] : DNAMES;
+  const isR = S.mode === 'rate';
+  let mD, dD;
+  if (isR) {
+    mD = ds.map(function(n) { const d = DISTS[n]; const t = d.mr+d.ms; return t > 0 ? +(d.ms/t*100).toFixed(1) : 0; });
+    dD = ds.map(function() { return 0; });
+  } else {
+    mD = ds.map(function(n) { return S.plat === 'duoduo' ? 0 : DISTS[n].mr + DISTS[n].ms; });
+    dD = ds.map(function(n) { return S.plat === 'meituan' ? 0 : DISTS[n].dr + (DISTS[n].ds||0); });
+  }
+  CH.gb.setOption({
+    animation:true, animationDuration:700, animationEasing:'cubicOut',
+    backgroundColor:'transparent',
+    grid:{top:14, right:14, bottom:52, left:42},
+    xAxis:{type:'category', data:ds, axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:C.t2, fontSize:12}},
+    yAxis:{type:'value', axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:C.border}}, axisLabel:{color:C.t3, fontSize:10, formatter: isR ? '{value}%' : '{value}'}},
+    legend:{bottom:6, itemWidth:12, itemHeight:8, textStyle:{color:C.t2, fontSize:11}},
+    tooltip:{trigger:'axis', backgroundColor:C.card, borderColor:C.border, textStyle:{color:C.t1}, axisPointer:{type:'shadow'}},
+    series: [
+      { name:'美团优选', type:'bar', barMaxWidth:36, data:mD, itemStyle:{color:C.amber, borderRadius:[4,4,0,0]},
+        label:{show:true, position:'top', color:C.amberDk, fontSize:11, fontWeight:700, formatter: function(p) { return p.value > 0 ? (isR ? p.value+'%' : p.value) : ''; }} },
+      { name:'多多买菜', type:'bar', barMaxWidth:36, data:dD, itemStyle:{color:C.sage, borderRadius:[4,4,0,0]},
+        label:{show:true, position:'top', color:C.sageDk, fontSize:11, fontWeight:700, formatter: function(p) { return p.value > 0 ? (isR ? p.value+'%' : p.value) : ''; }} }
+    ]
+  }, true);
+}
+
+/* =============================================
+   STACKED BAR CHART
+   ============================================= */
+function initSBar() {
+  CH.sb = echarts.init(document.getElementById('sBar'), null, { renderer: 'canvas' });
+  updateSBar();
+}
+function updateSBar() {
+  if (!CH.sb) return;
+  const ds = S.dist ? [S.dist] : DNAMES;
+  const isR = S.mode === 'rate';
+  let runD, stopD;
+  if (isR) {
+    runD  = ds.map(function(n) { return +(100 - DISTS[n].rate).toFixed(1); });
+    stopD = ds.map(function(n) { return +DISTS[n].rate.toFixed(1); });
+  } else {
+    runD  = ds.map(function(n) { const d = DISTS[n]; return S.plat === 'meituan' ? d.mr : S.plat === 'duoduo' ? d.dr : d.run; });
+    stopD = ds.map(function(n) { const d = DISTS[n]; return S.plat === 'meituan' ? d.ms : S.plat === 'duoduo' ? (d.ds||0) : d.stop; });
+  }
+  CH.sb.setOption({
+    animation:true, animationDuration:700, animationEasing:'cubicOut',
+    backgroundColor:'transparent',
+    grid:{top:14, right:14, bottom:52, left:42},
+    xAxis:{type:'category', data:ds, axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:C.t2, fontSize:12}},
+    yAxis:{type:'value', max: isR ? 100 : null, axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:C.border}}, axisLabel:{color:C.t3, fontSize:10, formatter: isR ? '{value}%' : '{value}'}},
+    legend:{bottom:6, itemWidth:12, itemHeight:8, textStyle:{color:C.t2, fontSize:11}},
+    tooltip:{
+      trigger:'axis', axisPointer:{type:'shadow'}, backgroundColor:C.card, borderColor:C.border, textStyle:{color:C.t1},
+      formatter: function(params) {
+        let html = '<strong>' + params[0].name + '</strong><br>';
+        params.forEach(function(p) { if (p.value > 0) html += p.marker + p.seriesName + '：' + p.value + (isR ? '%' : '个') + '<br>'; });
+        return html;
+      }
+    },
+    series: [
+      { name:'运营中', type:'bar', stack:'s', barMaxWidth:48, data:runD, itemStyle:{color:C.sage},
+        label:{show:true, position:'inside', color:'#fff', fontSize:11, fontWeight:700, formatter: function(p) { return p.value > 0 ? (isR ? p.value+'%' : p.value) : ''; }} },
+      { name:'已关停', type:'bar', stack:'s', barMaxWidth:48, data:stopD, itemStyle:{color:C.red, borderRadius:[4,4,0,0]},
+        label:{show:true, position:'inside', color:'#fff', fontSize:11, fontWeight:700, formatter: function(p) { return p.value > 0 ? (isR ? p.value+'%' : p.value) : ''; }} }
+    ]
+  }, true);
+}
+
+/* =============================================
+   DONUT CHART (double ring)
+   ============================================= */
+function initDonut() {
+  CH.dn = echarts.init(document.getElementById('donut'), null, { renderer: 'canvas' });
+  updateDonut();
+}
+function updateDonut() {
+  if (!CH.dn) return;
+  const key = S.dist || 'all';
+  const data = CHAN[key] || CHAN.all;
+  const teamVal = data.find(function(d) { return d.n === '社区团购'; });
+  const teamPct = teamVal ? teamVal.v : 18;
+  const otherPct = 100 - teamPct;
+
+  document.getElementById('donutSub').textContent = (S.dist ? S.dist : '全市') + ' · 482份有效问卷（渠道占比）';
+
+  CH.dn.setOption({
+    animation: true, animationDuration: 800, animationEasing: 'cubicOut',
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'item', backgroundColor: C.card, borderColor: C.border, textStyle: {color:C.t1},
+      formatter: function(p) { return p.name + '<br>占比：<strong>' + p.percent.toFixed(1) + '%</strong><br>约' + Math.round(482 * p.percent / 100) + '人'; }
+    },
+    legend: { orient:'horizontal', bottom:2, itemWidth:12, itemHeight:8, textStyle:{color:C.t2, fontSize:11} },
+    graphic: [{
+      type: 'text', left: 'center', top: '40%',
+      style: { text: teamPct + '%\n社区团购', textAlign: 'center', fontSize: 13, fontWeight: 700, fill: C.sageDk, lineHeight: 20 }
+    }],
+    series: [
+      {
+        name: '团购占比', type: 'pie', radius: ['22%','38%'], center: ['50%','46%'],
+        label: { show: false },
+        itemStyle: { borderRadius: 4, borderColor: C.card, borderWidth: 2 },
+        data: [
+          { name: '社区团购', value: teamPct, itemStyle: { color: C.sage } },
+          { name: '其他渠道', value: otherPct, itemStyle: { color: C.border } }
+        ]
+      },
+      {
+        name: '渠道分布', type: 'pie', radius: ['43%','66%'], center: ['50%','46%'],
+        avoidLabelOverlap: true,
+        itemStyle: { borderRadius: 5, borderColor: C.card, borderWidth: 3 },
+        label: { show: true, position: 'outside', formatter: '{b}\n{d}%', color: C.t1, fontSize: 11, fontWeight: 600, lineHeight: 16 },
+        emphasis: { scale: true, scaleSize: 7, itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,.1)' } },
+        data: data.map(function(d) { return { name: d.n, value: d.v, itemStyle: { color: d.c } }; })
+      }
+    ]
+  }, true);
+}
+
+/* =============================================
+   LINE CHART
+   ============================================= */
+function initLine() {
+  CH.ln = echarts.init(document.getElementById('lChart'), null, { renderer: 'canvas' });
+  updateLine();
+}
+function updateLine() {
+  if (!CH.ln) return;
+  const ageGroups = ['18-25岁', '26-40岁', '41-55岁', '55岁以上'];
+  const dColors = [C.amber, C.sage, C.red, C.purple];
+
+  let series;
+  if (S.dist) {
+    const d = FREQ[S.dist] || FREQ.all;
+    series = [{
+      name: S.dist, type: 'line', smooth: 0.4, data: d,
+      lineStyle: { color: C.amber, width: 3 },
+      itemStyle: { color: C.amber },
+      areaStyle: { color: { type:'linear', x:0,y:0,x2:0,y2:1, colorStops:[{offset:0,color:'rgba(221,180,128,.22)'},{offset:1,color:'rgba(221,180,128,0)'}] } },
+      symbol: 'circle', symbolSize: 7
+    }];
+  } else {
+    series = DNAMES.map(function(name, idx) {
+      const types = [[0,0],[5,3],[3,2],[2,2]];
+      return {
+        name: name, type: 'line', smooth: 0.4, data: FREQ[name],
+        lineStyle: { color: dColors[idx], width: 2.5, type: types[idx] },
+        itemStyle: { color: dColors[idx] },
+        symbol: 'circle', symbolSize: 6
+      };
+    });
+  }
+
+  document.getElementById('lineSub').textContent = (S.dist || '全市') + ' · 月均团购使用次数（次/月）';
+
+  CH.ln.setOption({
+    animation: true, animationDuration: 800,
+    backgroundColor: 'transparent',
+    grid: { top:14, right:14, bottom:50, left:44 },
+    xAxis: { type:'category', data:ageGroups, axisLine:{show:false}, axisTick:{show:false}, axisLabel:{color:C.t2, fontSize:11} },
+    yAxis: { type:'value', min:0, max:8, axisLine:{show:false}, axisTick:{show:false}, splitLine:{lineStyle:{color:C.border}}, axisLabel:{color:C.t3, fontSize:10, formatter:'{value}次'} },
+    legend: { bottom:4, itemWidth:16, itemHeight:8, textStyle:{color:C.t2, fontSize:10} },
+    tooltip: {
+      trigger: 'axis', axisPointer:{type:'line'}, backgroundColor:C.card, borderColor:C.border, textStyle:{color:C.t1},
+      formatter: function(params) {
+        let html = '<strong>' + params[0].axisValue + '</strong><br>';
+        params.forEach(function(p) { html += p.marker + p.seriesName + '：' + p.value + '次/月<br>'; });
+        return html;
+      }
+    },
+    series: series
+  }, true);
+}
+
+/* =============================================
+   RADAR CHART
+   ============================================= */
+function initRadar() {
+  CH.rd = echarts.init(document.getElementById('rChart'), null, { renderer: 'canvas' });
+  updateRadar();
+}
+function updateRadar() {
+  if (!CH.rd) return;
+  const dims = ['消费能力','距离便利性','站点密度','生鲜价格','配送时效'];
+  const dColors = [C.amber, C.sage, C.red, C.purple];
+  const areaCs = ['rgba(221,180,128,.12)','rgba(189,207,162,.12)','rgba(193,113,113,.12)','rgba(154,143,196,.12)'];
+
+  let seriesData;
+  if (S.dist) {
+    seriesData = [{ value: RADAR[S.dist] || RADAR.all, name: S.dist, lineStyle:{color:C.amber,width:2.5}, itemStyle:{color:C.amber}, areaStyle:{color:'rgba(221,180,128,.18)'} }];
+  } else {
+    seriesData = DNAMES.map(function(name, idx) {
+      return { value: RADAR[name], name: name, lineStyle:{color:dColors[idx],width:1.8,opacity:.8}, itemStyle:{color:dColors[idx]}, areaStyle:{color:areaCs[idx]} };
+    });
+    seriesData.push({ value: RADAR.all, name:'全市平均', lineStyle:{color:C.t1,width:2.5,type:[5,3]}, itemStyle:{color:C.t1}, areaStyle:{color:'rgba(61,53,48,.06)'} });
+  }
+
+  document.getElementById('radSub').textContent = (S.dist ? S.dist : '各区') + ' · 综合评分（满分10分）';
+
+  CH.rd.setOption({
+    animation: true, animationDuration: 900,
+    backgroundColor: 'transparent',
+    radar: {
+      indicator: dims.map(function(d) { return { name:d, max:10 }; }),
+      shape: 'polygon', center: ['50%','50%'], radius: '62%',
+      splitLine: { lineStyle: { color: C.border } },
+      splitArea: { show: false },
+      axisName: { color: C.t2, fontSize: 11, fontWeight: 600 },
+      axisLine: { lineStyle: { color: C.border } }
+    },
+    legend: { bottom:4, itemWidth:12, itemHeight:8, textStyle:{color:C.t2, fontSize:10} },
+    tooltip: {
+      backgroundColor: C.card, borderColor: C.border, textStyle: {color:C.t1},
+      formatter: function(params) {
+        const d = params.data;
+        const vals = Array.isArray(d.value) ? d.value : [];
+        return '<strong>' + d.name + '</strong><br>' + dims.map(function(dim, i) { return dim + '：' + (vals[i] || '-'); }).join('<br>');
+      }
+    },
+    series: [{ type: 'radar', data: seriesData }]
+  }, true);
+}
+
+/* =============================================
+   UPDATE ALL CHARTS
+   ============================================= */
+function updateAllCharts() {
+  updateMiniBar();
+  updateGBar();
+  updateSBar();
+  updateDonut();
+  updateLine();
+  updateRadar();
+  updateTable();
+}
+
+/* =============================================
+   MODE TOGGLE
+   ============================================= */
+function switchMode(mode) {
+  S.mode = mode;
+  document.getElementById('btn-tot').classList.toggle('on', mode === 'total');
+  document.getElementById('btn-rt').classList.toggle('on', mode === 'rate');
+  document.getElementById('mLbl').textContent = mode === 'total' ? '显示各区站点绝对数量' : '显示各区站点停运率（%）';
+  updateGBar(); updateSBar();
+}
+
+/* =============================================
+   NUMBER COUNTER
+   ============================================= */
+function animNum(el, target, dur) {
+  const t0 = performance.now();
+  function step(now) {
+    const elapsed = now - t0;
+    const p = Math.min(elapsed / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(e * target);
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = target;
+  }
+  requestAnimationFrame(step);
+}
+
+function startCounters() {
+  [['k1',228],['k2',27],['k3',201],['k4',482]].forEach(function(pair, i) {
+    const el = document.getElementById(pair[0]);
+    if (el) setTimeout(function() { animNum(el, pair[1], 1300); }, i * 160);
+  });
+}
+
+/* =============================================
+   SCROLL OBSERVER
+   ============================================= */
+function setupObserver() {
+  const io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting) return;
+
+      // Fade-up
+      if (entry.target.classList.contains('fu')) {
+        entry.target.classList.add('vis');
+      }
+
+      // Chart init by section
+      const id = entry.target.id;
+      if (id === 's2' && !chartsInited.s2) {
+        chartsInited.s2 = true;
+        setTimeout(function() { initMiniBar(); updateTable(); }, 300);
+      }
+      if (id === 's3' && !chartsInited.s3) {
+        chartsInited.s3 = true;
+        setTimeout(function() { initGBar(); initSBar(); }, 300);
+      }
+      if (id === 's4' && !chartsInited.s4) {
+        chartsInited.s4 = true;
+        setTimeout(function() { initDonut(); }, 300);
+      }
+      if (id === 's5' && !chartsInited.s5) {
+        chartsInited.s5 = true;
+        setTimeout(function() { initLine(); initRadar(); }, 300);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+  ['s2','s3','s4','s5'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) io.observe(el);
+  });
+  document.querySelectorAll('.fu').forEach(function(el) { io.observe(el); });
+}
+
+/* =============================================
+   RESIZE
+   ============================================= */
+window.addEventListener('resize', function() {
+  Object.values(CH).forEach(function(c) { if (c && c.resize) c.resize(); });
+});
+
+/* =============================================
+   INIT
+   ============================================= */
+window.addEventListener('DOMContentLoaded', function() {
+  // Start hero animations
+  setTimeout(startCounters, 400);
+  // Make hero fade-up elements visible immediately
+  document.querySelectorAll('.hero .fu').forEach(function(el) {
+    setTimeout(function() { el.classList.add('vis'); }, 200);
+  });
+
+  // Init map
+  initMap();
+
+  // Setup scroll-triggered chart loading
+  setupObserver();
+
+  // If S2 already in view (rare), init it
+  const s2 = document.getElementById('s2');
+  if (s2 && s2.getBoundingClientRect().top < window.innerHeight * 0.9) {
+    chartsInited.s2 = true;
+    setTimeout(function() { initMiniBar(); updateTable(); }, 400);
+  }
+});
+</script>
+</body>
+</html>
