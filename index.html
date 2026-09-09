@@ -143,6 +143,8 @@
       box-shadow: 0 18px 60px rgba(28,25,20,.07); transition: opacity .25s ease, transform .25s ease;
     }
     .project.wide { grid-column: span 12; min-height: unset; display: grid; grid-template-columns: .95fr 1.05fr; }
+    .project.wide.full { display: flex; }
+    .project.wide.full .project-media { min-height: unset; }
     .project[hidden] { display: none; }
     .project-media { position: relative; min-height: 310px; overflow: hidden; background: #ece8df; }
     .project.wide .project-media { min-height: 560px; }
@@ -173,6 +175,27 @@
     .strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(150px, 30%); gap: 10px; overflow-x: auto; padding: 12px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
     .strip img { width: 100%; aspect-ratio: .72; object-fit: cover; border-radius: 18px; scroll-snap-align: start; cursor: zoom-in; background: #ece8df; }
     .strip img.phone { object-fit: contain; background: #111; }
+
+    .video-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 12px; }
+    .video-item { margin: 0; overflow: hidden; background: #171817; border-radius: 20px; }
+    .video-item video { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; background: #111; }
+    .video-item figcaption { padding: 12px 14px 14px; color: rgba(255,255,255,.76); font-size: 12px; font-weight: 730; }
+
+    .gallery-strip, .photo-strip {
+      display: grid; grid-auto-flow: column; gap: 10px; overflow-x: auto; padding: 12px;
+      scroll-snap-type: x mandatory; scrollbar-width: thin;
+    }
+    .gallery-strip { grid-auto-columns: minmax(210px, 27%); }
+    .gallery-strip img {
+      width: 100%; aspect-ratio: 4 / 5; object-fit: contain; padding: 8px; background: #eee8df;
+      border-radius: 18px; scroll-snap-align: start; cursor: zoom-in;
+    }
+    .photo-strip { grid-auto-columns: minmax(260px, 34%); align-items: stretch; }
+    .photo-strip img {
+      width: 100%; height: 330px; object-fit: cover; border-radius: 18px;
+      scroll-snap-align: start; cursor: zoom-in; background: #e8e2d9;
+    }
+    .photo-strip img.portrait { object-position: center 28%; }
 
     .duo { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 10px; height: 100%; }
     .duo img { width: 100%; height: 100%; min-height: 310px; object-fit: cover; border-radius: 19px; cursor: zoom-in; }
@@ -228,6 +251,7 @@
       h1 { font-size: clamp(50px, 13vw, 82px); }
       .project, .project.wide { grid-column: span 12; }
       .project.wide { grid-template-columns: 1fr; }
+      .project.wide.full { display: flex; }
       .project.wide .project-media { min-height: 400px; }
       .section-top { align-items: start; flex-direction: column; }
       .role-grid { grid-template-columns: 1fr; }
@@ -257,6 +281,10 @@
       .project-body { padding: 20px; }
       .project-media, .project.wide .project-media { min-height: 280px; }
       .strip { grid-auto-columns: 61%; }
+      .video-grid { grid-template-columns: 1fr; }
+      .gallery-strip { grid-auto-columns: 72%; }
+      .photo-strip { grid-auto-columns: 82%; }
+      .photo-strip img { height: 300px; }
       .duo { grid-template-columns: 1fr; }
       .duo img { min-height: 230px; }
       .fit-panel { border-radius: 24px; padding: 28px 20px; }
@@ -322,7 +350,7 @@
       <div class="shell">
         <div class="section-top reveal">
           <div>
-            <p class="section-kicker">Selected work · 01—04</p>
+            <p class="section-kicker">Selected work · 01—06</p>
             <h2>代表项目，不只展示成品。</h2>
           </div>
           <p class="section-note">每个案例都标出我的具体职责、能力与成果。点击图片可放大，按方向筛选可以快速查看与岗位最相关的内容。</p>
@@ -333,6 +361,7 @@
           <button class="filter" type="button" data-filter="media">新媒体运营</button>
           <button class="filter" type="button" data-filter="ai">AI 内容</button>
           <button class="filter" type="button" data-filter="visual">视觉创意</button>
+          <button class="filter" type="button" data-filter="photo">摄影作品</button>
         </div>
 
         <div class="projects">
@@ -340,9 +369,6 @@
             <div class="project-media">
               <span class="media-badge">New Media Operation</span>
               <div class="strip" aria-label="小红书代表内容横向画廊">
-                <img class="zoomable" src="assets/xhs-work-01.webp" alt="拼豆手工内容：长大后所有人都在夸奖这个爱好" loading="lazy">
-                <img class="zoomable" src="assets/xhs-work-02.webp" alt="拼豆手工生活方式图文作品" loading="lazy">
-                <img class="zoomable" src="assets/xhs-work-03.webp" alt="旅行与拼豆创意内容" loading="lazy">
                 <img class="zoomable phone" src="assets/xhs-data-01.webp" alt="小红书后台与内容数据截图" loading="lazy">
                 <img class="zoomable phone" src="assets/xhs-data-02.webp" alt="小红书内容发布与互动截图" loading="lazy">
                 <img class="zoomable phone" src="assets/xhs-data-03.webp" alt="拼豆教程内容截图" loading="lazy">
@@ -398,23 +424,92 @@
             </div>
           </article>
 
-          <article class="project wide reveal" data-category="ai visual">
+          <article class="project wide full reveal" data-category="ai">
             <div class="project-media">
-              <span class="media-badge">AI Creative & Visual</span>
-              <div class="duo">
-                <img class="zoomable" src="assets/award-poster.webp" alt="超能品牌与红楼梦人物结合的系列平面海报" loading="lazy">
-                <img class="zoomable" src="assets/ai-storyboard.webp" alt="AI 求职自我介绍短片分镜与视觉氛围展板" loading="lazy">
+              <span class="media-badge">Brand AI Animation</span>
+              <div class="video-grid">
+                <figure class="video-item">
+                  <video controls playsinline preload="metadata" poster="assets/video-lanju.webp" aria-label="榄菊品牌 AI 动画">
+                    <source src="assets/brand-lanju.mp4" type="video/mp4">
+                  </video>
+                  <figcaption>榄菊 · AI 品牌动画</figcaption>
+                </figure>
+                <figure class="video-item">
+                  <video controls playsinline preload="metadata" poster="assets/video-canva.webp" aria-label="可画品牌 AI 动画">
+                    <source src="assets/brand-canva.mp4" type="video/mp4">
+                  </video>
+                  <figcaption>可画 · AI 品牌动画</figcaption>
+                </figure>
+                <figure class="video-item">
+                  <video controls playsinline preload="metadata" poster="assets/video-lottery.webp" aria-label="中国福利彩票 AI 动画">
+                    <source src="assets/brand-lottery.mp4" type="video/mp4">
+                  </video>
+                  <figcaption>中国福利彩票 · AI 动画</figcaption>
+                </figure>
               </div>
             </div>
             <div class="project-body">
               <span class="project-index">PROJECT 04</span>
-              <h3>品牌创意 × AI 影像表达</h3>
-              <p class="project-summary">大广赛超能系列以《红楼梦》人物气质切入，将清洁产品卖点转化为国风视觉叙事；可画动漫项目则从脚本、画面到后期完整推进。近期进一步探索 AI 求职短片，把作品集、能力点与人物出场设计成连贯的镜头语言。</p>
-              <div class="metrics"><span class="metric"><strong>2 项</strong>广东赛区省二等奖</span><span class="metric"><strong>全流程</strong>创意到后期</span></div>
-              <div class="tags"><span class="tag">品牌创意</span><span class="tag">脚本分镜</span><span class="tag">AI 影像</span><span class="tag">平面设计</span><span class="tag">视频剪辑</span></div>
+              <h3>品牌 AI 动画创作</h3>
+              <p class="project-summary">围绕榄菊、可画与中国福利彩票三种不同品牌语境，分别探索定格微缩、经典艺术焕新与温暖公益叙事。根据品牌调性设计人物、场景和情绪节奏，让 AI 画面不止“好看”，也能服务明确的传播主题。</p>
+              <div class="metrics"><span class="metric"><strong>3 支</strong>品牌 AI 动画</span><span class="metric"><strong>全流程</strong>概念到成片</span></div>
+              <div class="tags"><span class="tag">品牌洞察</span><span class="tag">AI 画面生成</span><span class="tag">脚本分镜</span><span class="tag">镜头衔接</span><span class="tag">视频剪辑</span></div>
               <details class="case-details">
-                <summary>展开创意说明</summary>
-                <p>我先抓人物与产品之间的共同语义，再统一文案、色彩与画面节奏。创作重点不是简单“国风化”或“AI 化”，而是让概念能被一眼理解，并能延展到连续画面。</p>
+                <summary>展开创作方法</summary>
+                <p>先提炼品牌的核心情绪和视觉锚点，再拆分镜头、统一角色与场景，最后通过剪辑节奏、转场和音乐完成成片。三个案例也体现了我对不同内容调性的适配能力。</p>
+              </details>
+            </div>
+          </article>
+
+          <article class="project wide full reveal" data-category="visual">
+            <div class="project-media">
+              <span class="media-badge">Graphic & Brand Visual</span>
+              <div class="gallery-strip" aria-label="平面海报与品牌视觉画廊">
+                <img class="zoomable" src="assets/award-poster.webp" alt="超能品牌与红楼梦人物结合的系列海报" loading="lazy">
+                <img class="zoomable" src="assets/xhs-work-02.webp" alt="HBN 抗老护肤视觉海报" loading="lazy">
+                <img class="zoomable" src="assets/visual-hbn-01.webp" alt="HBN 真正的修复主题海报" loading="lazy">
+                <img class="zoomable" src="assets/visual-hbn-02.webp" alt="HBN 熬夜留下主题海报" loading="lazy">
+                <img class="zoomable" src="assets/xhs-work-01.webp" alt="泡泡玛特 Molly 生活方式海报" loading="lazy">
+                <img class="zoomable" src="assets/xhs-work-03.webp" alt="泡泡玛特 Molly 旅行主题海报" loading="lazy">
+                <img class="zoomable" src="assets/visual-popmart-01.webp" alt="泡泡玛特 Molly 画出来主题海报" loading="lazy">
+                <img class="zoomable" src="assets/visual-popmart-02.webp" alt="泡泡玛特 Molly 幸福主题海报" loading="lazy">
+                <img class="zoomable" src="assets/visual-popmart-03.webp" alt="泡泡玛特 Molly 深夜办公主题海报" loading="lazy">
+                <img class="zoomable" src="assets/visual-popmart-04.webp" alt="泡泡玛特 Molly 通勤主题海报" loading="lazy">
+              </div>
+            </div>
+            <div class="project-body">
+              <span class="project-index">PROJECT 05</span>
+              <h3>平面海报与品牌视觉</h3>
+              <p class="project-summary">作品覆盖大广赛超能 ×《红楼梦》创意系列、HBN 护肤视觉与泡泡玛特 Molly 系列。根据品牌气质调整构图、色彩、文字层级与情绪场景，在统一系列感的同时保留单张海报的传播切口。</p>
+              <div class="metrics"><span class="metric"><strong>省二等奖</strong>超能平面广告</span><span class="metric"><strong>3 组</strong>品牌视觉系列</span></div>
+              <div class="tags"><span class="tag">品牌创意</span><span class="tag">系列化表达</span><span class="tag">版式设计</span><span class="tag">视觉叙事</span><span class="tag">PS / 可画</span></div>
+              <details class="case-details">
+                <summary>展开视觉思路</summary>
+                <p>超能系列从《红楼梦》人物气质切入产品卖点；HBN 以克制留白和材质隐喻表达修复与抗老；Molly 系列用日常场景与情绪文案强化年轻化、可分享的视觉氛围。</p>
+              </details>
+            </div>
+          </article>
+
+          <article class="project wide full reveal" data-category="photo visual">
+            <div class="project-media">
+              <span class="media-badge">Portrait & Commercial Photography</span>
+              <div class="photo-strip" aria-label="人像与商业摄影画廊">
+                <img class="zoomable" src="assets/photo-portrait-01.webp" alt="校园自然光人像摄影" loading="lazy">
+                <img class="zoomable portrait" src="assets/photo-portrait-02.webp" alt="橙蓝撞色创意人像摄影" loading="lazy">
+                <img class="zoomable portrait" src="assets/photo-portrait-03.webp" alt="展会现场纪实人像摄影" loading="lazy">
+                <img class="zoomable portrait" src="assets/photo-portrait-04.webp" alt="橙色光影氛围人像摄影" loading="lazy">
+                <img class="zoomable" src="assets/photo-commercial-01.webp" alt="益优青年项目活动商业摄影" loading="lazy">
+                <img class="zoomable" src="assets/photo-commercial-02.webp" alt="益优青年品牌活动合影摄影" loading="lazy">
+              </div>
+            </div>
+            <div class="project-body">
+              <span class="project-index">PROJECT 06</span>
+              <h3>人像摄影与益优青年商业记录</h3>
+              <p class="project-summary">个人创作侧重自然状态、现场光线与色彩情绪，通过校园、展会和橙色光影等不同环境建立人物氛围；商业摄影部分服务益优青年活动，完整记录参与者、品牌物料与活动规模。</p>
+              <div class="tags"><span class="tag">人像拍摄</span><span class="tag">现场构图</span><span class="tag">光线与色彩</span><span class="tag">活动记录</span><span class="tag">商业摄影</span></div>
+              <details class="case-details">
+                <summary>展开能力说明</summary>
+                <p>能够根据人物与现场快速调整机位、构图和情绪引导，并在商业活动中兼顾关键人物、品牌信息、参与氛围与可用于后续宣传的完整素材覆盖。</p>
               </details>
             </div>
           </article>
