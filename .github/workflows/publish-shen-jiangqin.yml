@@ -1,0 +1,41 @@
+name: Publish Shen Jiangqin portfolio
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/publish-shen-jiangqin.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out public portfolio repository
+        uses: actions/checkout@v4
+
+      - name: Download the latest public portfolio
+        run: |
+          set -euo pipefail
+          rm -rf _shen_mirror shen-jiangqin-portfolio
+          mkdir -p _shen_mirror
+          wget             --recursive             --level=4             --page-requisites             --convert-links             --adjust-extension             --no-parent             --no-host-directories             --directory-prefix=_shen_mirror             --domains=shenjiangqin-portfolio-2026.chenshitong544.chatgpt.site             https://shenjiangqin-portfolio-2026.chenshitong544.chatgpt.site/
+          mkdir -p shen-jiangqin-portfolio
+          cp -a _shen_mirror/. shen-jiangqin-portfolio/
+          rm -rf _shen_mirror
+          touch shen-jiangqin-portfolio/.nojekyll
+
+      - name: Publish the subdirectory
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add shen-jiangqin-portfolio
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Publish Shen Jiangqin portfolio"
+          git push
