@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>读研还是工作？数据告诉你答案</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#6C5CE7;--primary-light:#A29BFE;--primary-dark:#4A3CB5;
+  --accent-pink:#FD79A8;--accent-orange:#FDCB6E;--accent-green:#00B894;
+  --accent-blue:#0984E3;--accent-red:#E17055;
+  --bg-start:#F8F9FF;--bg-end:#FFF0F5;
+  --card-bg:rgba(255,255,255,0.85);--text-dark:#2D2D3A;--text-mid:#63637A;--text-light:#A0A0B8;
+  --shadow-sm:0 2px 16px rgba(108,92,231,0.08);--shadow-md:0 8px 32px rgba(108,92,231,0.12);--shadow-lg:0 16px 48px rgba(108,92,231,0.15);
+  --radius-sm:10px;--radius-md:18px;--radius-lg:24px;
+  --transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+body{font-family:'PingFang SC','Noto Sans SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,var(--bg-start),var(--bg-end),#F0F4FF);color:var(--text-dark);line-height:1.8;min-height:100vh;overflow-x:hidden}
+/* ===== 加载页 ===== */
+.loading-screen{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.8s,visibility 0.8s}
+.loading-screen.hide{opacity:0;visibility:hidden;pointer-events:none}
+.loading-screen .ld-icon{font-size:56px;margin-bottom:16px;animation:ldPulse 1.5s ease-in-out infinite}
+@keyframes ldPulse{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.1) rotate(10deg)}}
+.loading-screen .ld-text{font-size:20px;font-weight:700;color:#fff;letter-spacing:3px;margin-bottom:8px}
+.loading-screen .ld-sub{font-size:13px;color:var(--primary-light);letter-spacing:1px;margin-bottom:30px}
+.loading-screen .ld-bar-wrap{width:240px;height:4px;background:rgba(255,255,255,0.2);border-radius:4px;overflow:hidden}
+.loading-screen .ld-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--accent-pink),var(--accent-orange));border-radius:4px;transition:width 0.1s linear}
+.loading-screen .ld-progress{color:var(--primary-light);font-size:12px;margin-top:10px;letter-spacing:1px}
+
+/* ===== Cover ===== */
+.cover-tag{display:inline-block;background:rgba(108,92,231,0.1);color:var(--primary);padding:4px 16px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:2px;margin-bottom:14px}
+.cover-guide{background:linear-gradient(135deg,rgba(108,92,231,0.04),rgba(253,121,168,0.04));border-radius:var(--radius-md);padding:20px 24px;margin:24px 0;border:1px solid rgba(108,92,231,0.08);text-align:center;font-size:14px;color:var(--text-mid);line-height:1.9;position:relative}
+.cover-guide::before{content:'💬';position:absolute;top:-14px;left:16px;font-size:22px}
+.cover-btn{display:inline-block;padding:12px 36px;border:none;border-radius:24px;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 20px rgba(108,92,231,0.3);transition:var(--transition)}
+.cover-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,92,231,0.4)}
+
+/* ===== 认知测试 ===== */
+.cog-test{background:linear-gradient(135deg,rgba(108,92,231,0.06),rgba(253,121,168,0.04));border-radius:var(--radius-lg);padding:28px 24px;margin:28px 0;border:2px solid var(--primary-light);transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.cog-test.show{transform:translateY(0);opacity:1}
+.cog-test .ct-title{font-size:16px;font-weight:700;color:var(--text-dark);margin-bottom:8px}
+.cog-test .ct-desc{font-size:13px;color:var(--text-mid);margin-bottom:16px;line-height:1.7}
+.cog-test .ct-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.cog-test .ct-options{grid-template-columns:1fr}}
+.cog-test .ct-btn{padding:14px;border:2px solid rgba(108,92,231,0.15);border-radius:var(--radius-md);background:#fff;font-size:13px;font-weight:600;color:var(--text-dark);cursor:pointer;transition:var(--transition);text-align:center;line-height:1.5}
+.cog-test .ct-btn:hover{border-color:var(--primary);background:rgba(108,92,231,0.04);transform:translateY(-2px)}
+.cog-test .ct-btn.chosen{border-color:var(--primary);background:rgba(108,92,231,0.1);color:var(--primary);pointer-events:none}
+.cog-test .ct-btn.disabled{opacity:0.5;pointer-events:none}
+.cog-modal{position:fixed;inset:0;z-index:999;background:rgba(45,45,58,0.5);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:all 0.3s}
+.cog-modal.show{opacity:1;visibility:visible}
+.cog-modal .cm-box{background:#fff;border-radius:var(--radius-lg);padding:32px 28px;max-width:360px;text-align:center;box-shadow:var(--shadow-lg);transform:scale(0.9);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1)}
+.cog-modal.show .cm-box{transform:scale(1)}
+.cog-modal .cm-box .cm-emoji{font-size:48px;margin-bottom:12px}
+.cog-modal .cm-box .cm-title{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:8px}
+.cog-modal .cm-box .cm-desc{font-size:13px;color:var(--text-mid);line-height:1.7}
+.cog-modal .cm-box .cm-progress{width:100%;height:3px;background:#f0f0f0;border-radius:3px;margin-top:20px;overflow:hidden}
+.cog-modal .cm-box .cm-progress .cm-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent-pink));width:0%;border-radius:3px;transition:width 2s linear}
+
+/* ===== 通用组件 ===== */
+.progress-wrap{position:fixed;top:0;left:0;width:100%;height:4px;z-index:1000;background:rgba(255,255,255,0.5);backdrop-filter:blur(10px)}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent-pink),var(--accent-orange));width:0%;transition:width 0.15s ease-out;border-radius:0 4px 4px 0}
+.float-nav{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:999;display:flex;flex-direction:column;gap:12px}
+.float-nav a{width:12px;height:12px;border-radius:50%;background:var(--text-light);display:block;transition:var(--transition);position:relative;text-decoration:none;flex-shrink:0}
+.float-nav a:hover,.float-nav a.active{background:var(--primary);transform:scale(1.4);box-shadow:0 0 12px rgba(108,92,231,0.4)}
+.float-nav a .dot-tip{position:absolute;right:22px;top:50%;transform:translateY(-50%);background:var(--text-dark);color:#fff;font-size:10px;padding:3px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.2s;font-weight:500}
+.float-nav a:hover .dot-tip{opacity:1}
+.container{max-width:740px;margin:0 auto;padding:60px 24px 80px;position:relative}
+.header{margin-bottom:40px;text-align:center;position:relative}
+.header .label{font-size:12px;color:var(--text-light);letter-spacing:3px;margin-bottom:10px;text-transform:uppercase}
+.header h1{font-size:32px;font-weight:800;line-height:1.3;letter-spacing:1px;background:linear-gradient(135deg,var(--primary),var(--accent-pink),var(--accent-orange));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header .sub{font-size:14px;color:var(--text-mid);margin-top:10px;line-height:1.7}
+.header .meta{font-size:11px;color:var(--text-light);margin-top:12px;border-top:1px solid rgba(108,92,231,0.1);padding-top:12px}
+.text-block{font-size:15px;color:var(--text-mid);line-height:2;margin-bottom:24px;padding:0 4px;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.text-block.show{transform:translateY(0);opacity:1}
+.text-block .hl{color:var(--primary);font-weight:600}
+.text-block .hl2{color:var(--accent-red);font-weight:600}
+.text-block .hl3{color:var(--accent-green);font-weight:600}
+.text-block .big-num{font-size:28px;font-weight:800;display:inline-block;margin:0 3px;background:linear-gradient(135deg,var(--primary),var(--accent-pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.text-block .big-num.red{background:linear-gradient(135deg,var(--accent-red),var(--accent-pink));-webkit-background-clip:text;background-clip:text}
+.text-block .big-num.green{background:linear-gradient(135deg,var(--accent-green),#55EFC4);-webkit-background-clip:text;background-clip:text}
+.pull-quote{background:linear-gradient(135deg,rgba(108,92,231,0.06),rgba(253,121,168,0.06));border-radius:var(--radius-md);padding:20px 24px;margin:24px 0;border-left:4px solid var(--primary);font-size:14px;color:var(--text-mid);line-height:1.8;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.pull-quote.show{transform:translateY(0);opacity:1}
+.pull-quote .src{font-size:12px;color:var(--text-light);margin-top:6px}
+.section-divider{text-align:center;margin:48px 0 32px;position:relative;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.section-divider.show{transform:translateY(0);opacity:1}
+.section-divider::before{content:'';position:absolute;top:50%;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,92,231,0.2),transparent)}
+.section-divider span{display:inline-block;background:linear-gradient(135deg,var(--primary),var(--accent-pink));color:#fff;padding:6px 24px;border-radius:20px;font-size:12px;letter-spacing:2px;position:relative;font-weight:600;box-shadow:0 4px 16px rgba(108,92,231,0.2)}
+.chart-card{background:var(--card-bg);border-radius:var(--radius-lg);padding:28px 24px;margin:28px 0;box-shadow:var(--shadow-sm);border:1px solid rgba(255,255,255,0.6);backdrop-filter:blur(12px);transition:var(--transition);transform:translateY(30px);opacity:0}
+.chart-card.show{transform:translateY(0);opacity:1}
+.chart-card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.chart-card .chart-title{font-size:18px;font-weight:700;color:var(--text-dark);margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.chart-card .chart-desc{font-size:13px;color:var(--text-light);margin-bottom:16px;line-height:1.6}
+.chart-card .chart-box{position:relative;height:320px;margin:0 -4px}
+.chart-card .chart-box.tall{height:380px}
+.chart-card .chart-box.xtall{min-height:420px}
+.src-label{display:inline-block;font-size:11px;color:var(--text-light);background:rgba(108,92,231,0.06);padding:4px 14px;border-radius:10px;margin-top:10px;transition:var(--transition)}
+.stage-header{background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(253,121,168,0.06));border-radius:var(--radius-lg);padding:24px 22px;margin:24px 0;border-left:5px solid var(--primary);transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.stage-header.show{transform:translateY(0);opacity:1}
+.stage-header .st-badge{display:inline-block;background:linear-gradient(135deg,var(--primary),var(--accent-pink));color:#fff;padding:4px 16px;border-radius:12px;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px}
+.stage-header .st-title{font-size:19px;font-weight:800;color:var(--text-dark);line-height:1.4;margin-bottom:4px}
+.stage-header .st-sub{font-size:13px;color:var(--text-mid);line-height:1.7}
+.data-spotlight{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}
+@media(max-width:500px){.data-spotlight{grid-template-columns:1fr}}
+.ds-card{background:rgba(255,255,255,0.7);border-radius:var(--radius-md);padding:14px 16px;border:1px solid rgba(108,92,231,0.08);transition:var(--transition);transform:translateY(20px);opacity:0}
+.ds-card.show{transform:translateY(0);opacity:1}
+.ds-card .ds-label{font-size:11px;color:var(--text-light);font-weight:600;margin-bottom:4px}
+.ds-card .ds-data{font-size:22px;font-weight:800;margin:2px 0}
+.ds-card .ds-data.blue{color:var(--primary)}
+.ds-card .ds-data.red{color:var(--accent-red)}
+.ds-card .ds-data.green{color:var(--accent-green)}
+.ds-card .ds-data.orange{color:var(--accent-orange)}
+.ds-card .ds-src{font-size:10px;color:var(--text-light);margin-top:2px}
+.cost-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}
+@media(max-width:600px){.cost-grid{grid-template-columns:repeat(2,1fr)}}
+.cost-item{background:rgba(255,255,255,0.7);border-radius:var(--radius-md);padding:0;text-align:center;transition:var(--transition);cursor:default;overflow:hidden;display:flex;flex-direction:column;border:1px solid rgba(108,92,231,0.08)}
+.cost-item:hover{background:#fff;box-shadow:var(--shadow-md);transform:translateY(-4px)}
+.cost-item .ci-top{padding:16px 10px 10px;display:flex;flex-direction:column;align-items:center;flex:1;width:100%}
+.cost-item .ico{font-size:24px;margin-bottom:3px;display:block;width:100%;text-align:center}
+.cost-item .lb{font-size:11px;color:var(--text-light);font-weight:600;letter-spacing:1px;margin-bottom:2px;width:100%;text-align:center}
+.cost-item .num{font-size:24px;font-weight:800;margin:2px 0;color:var(--accent-red);text-align:center;width:100%;display:block}
+.cost-item .num.bl{color:var(--primary)}
+.cost-item .num.pu{color:var(--primary-light)}
+.cost-item .ci-bar{height:6px;width:100%;margin-top:auto}
+.cost-item .ci-bar .cb-fill{height:100%;transition:width 0.8s cubic-bezier(0.34,1.56,0.64,1);width:0%}
+.cost-item.show .ci-bar .cb-fill{width:100%}
+.cost-item .ds{font-size:9px;color:var(--text-light);padding:6px 8px;background:rgba(248,249,255,0.5);line-height:1.3;margin-top:0}
+.collapse-quote{text-align:center;padding:20px 16px;margin:16px 0;position:relative;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.collapse-quote.show{transform:translateY(0);opacity:1}
+.collapse-quote .cq-text{font-size:17px;font-weight:700;color:var(--text-dark);line-height:1.6;font-style:italic}
+.collapse-quote .cq-sub{font-size:12px;color:var(--text-light);margin-top:4px}
+.truth-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+@media(max-width:600px){.truth-grid{grid-template-columns:1fr}}
+.truth-item{background:rgba(255,255,255,0.7);border-radius:var(--radius-md);padding:18px 14px;text-align:center;border:1px solid rgba(108,92,231,0.08);transition:var(--transition);transform:translateY(20px);opacity:0}
+.truth-item.show{transform:translateY(0);opacity:1}
+.truth-item .ti-num{display:inline-block;width:32px;height:32px;line-height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--accent-pink));color:#fff;font-size:15px;font-weight:800;margin-bottom:8px}
+.truth-item .ti-title{font-size:14px;font-weight:700;color:var(--text-dark);margin-bottom:4px}
+.truth-item .ti-desc{font-size:12px;color:var(--text-mid);line-height:1.7}
+.conclusion-box{background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(0,184,148,0.06));border-radius:var(--radius-lg);padding:22px 24px;margin:24px 0;text-align:center;border:2px dashed var(--primary);transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.conclusion-box.show{transform:translateY(0);opacity:1}
+.conclusion-box .cb-label{font-size:11px;color:var(--text-light);font-weight:600;letter-spacing:2px;margin-bottom:6px}
+.conclusion-box .cb-text{font-size:17px;font-weight:800;color:var(--primary);line-height:1.5}
+.conclusion-box .cb-sub{font-size:13px;color:var(--text-mid);margin-top:6px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.stat-item{background:rgba(255,255,255,0.6);border:1px solid rgba(108,92,231,0.08);border-radius:var(--radius-md);padding:12px;text-align:center}
+.stat-item .num{font-size:24px;font-weight:800}
+.stat-item .num.gr{color:var(--accent-green)}
+.stat-item .num.re{color:var(--accent-red)}
+.stat-item .num.am{color:var(--accent-orange)}
+.stat-item .lb{font-size:11px;color:var(--text-light);margin-top:2px}
+.unlock-btn{padding:10px 32px;border:none;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;transition:var(--transition);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 16px rgba(108,92,231,0.25)}
+.unlock-btn:hover{transform:translateY(-2px)}
+.unlock-btn.lk{background:linear-gradient(135deg,#bdc3c7,#95a5a6);box-shadow:none}
+.lk-content{opacity:0.25;pointer-events:none;transition:opacity 0.6s;filter:blur(2px)}
+.lk-content.unlk{opacity:1;pointer-events:auto;filter:blur(0)}
+.hint{text-align:center;font-size:11px;color:var(--text-light);margin-bottom:6px}
+.legend-strip{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light);background:rgba(255,255,255,0.5);padding:4px 14px;border-radius:8px;border:1px solid rgba(108,92,231,0.08)}
+.leg .d{width:10px;height:10px;border-radius:4px;flex-shrink:0}
+.flow-wrap{background:rgba(255,255,255,0.5);border:1px solid rgba(108,92,231,0.08);border-radius:var(--radius-md);padding:18px 14px}
+.flow-row{display:flex;align-items:stretch;justify-content:center;gap:3px;flex-wrap:wrap}
+.fn{flex:1;min-width:100px;border:1.5px solid rgba(108,92,231,0.12);border-radius:var(--radius-md);padding:12px 8px;text-align:center;background:rgba(255,255,255,0.6);transition:var(--transition);cursor:default}
+.fn:hover{background:#fff;box-shadow:var(--shadow-sm);transform:translateY(-3px)}
+.fn .fi{font-size:22px;margin-bottom:2px;display:block}
+.fn .ft{font-size:12px;font-weight:700;color:var(--text-dark)}
+.fn .fd{font-size:10px;color:var(--text-light);margin-top:2px;line-height:1.3}
+.fa{font-size:16px;color:var(--text-light);display:flex;align-items:center;padding:0;flex-shrink:0;flex-direction:column;opacity:0.5}
+.fn.s1{border-color:var(--primary);background:rgba(108,92,231,0.06)}
+.fn.s2{background:linear-gradient(135deg,rgba(108,92,231,0.08),rgba(162,155,254,0.06));border-color:var(--primary)}
+.fn.s3{border-color:var(--accent-red);background:rgba(225,112,85,0.06)}
+.fn.s4{border-color:var(--accent-green);background:rgba(0,184,148,0.06)}
+.fn.s5{background:linear-gradient(135deg,rgba(253,203,110,0.15),rgba(253,121,168,0.08));border-color:var(--accent-orange)}
+.fn .badge{font-size:8px;font-weight:700;color:var(--text-light);display:block;margin-bottom:2px}
+.flow-tags{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:12px}
+.flow-tags span{padding:4px 10px;border-radius:8px;font-size:10px;background:rgba(255,255,255,0.5);color:var(--text-mid);border:1px solid rgba(108,92,231,0.08);transition:var(--transition)}
+
+/* ===== 四象限矩阵 ===== */
+.matrix-wrap{width:100%;margin:14px 0;background:rgba(255,255,255,0.5);border-radius:var(--radius-md);padding:14px;backdrop-filter:blur(4px)}
+.mx-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:8px}
+.mx-quad{border-radius:var(--radius-md);padding:18px 16px;background:rgba(255,255,255,0.7);border:1px solid rgba(108,92,231,0.1);display:flex;flex-direction:column;gap:6px}
+.mx-quad .mx-q-title{font-size:14px;font-weight:700;line-height:1.4}
+.mx-quad .mx-q-desc{font-size:12px;color:var(--text-mid);line-height:1.6}
+.mx-quad .mx-q-tag{font-size:10px;padding:3px 12px;border-radius:8px;color:#fff;font-weight:700;align-self:flex-start;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.mx-quad.tl{border-left:4px solid var(--accent-green)}.mx-quad.tl .mx-q-title{color:var(--accent-green)}.mx-quad.tl .mx-q-tag{background:var(--accent-green)}
+.mx-quad.tr{border-left:4px solid var(--primary)}.mx-quad.tr .mx-q-title{color:var(--primary)}.mx-quad.tr .mx-q-tag{background:linear-gradient(135deg,var(--accent-orange),#f39c12)}
+.mx-quad.bl{border-left:4px solid var(--text-light)}.mx-quad.bl .mx-q-title{color:var(--text-mid)}.mx-quad.bl .mx-q-tag{background:var(--text-light)}
+.mx-quad.br{border-left:4px solid var(--accent-blue)}.mx-quad.br .mx-q-title{color:var(--accent-blue)}.mx-quad.br .mx-q-tag{background:var(--accent-blue)}
+.mx-label{text-align:center;font-size:11px;color:var(--text-light);font-weight:600;letter-spacing:1px;padding:4px 0 0}
+@media(max-width:500px){.mx-quad{padding:14px 12px}.mx-quad .mx-q-title{font-size:13px}.mx-quad .mx-q-desc{font-size:11px}}
+
+/* ===== 最终问卷 ===== */
+.final-quiz{background:rgba(255,255,255,0.7);border-radius:var(--radius-lg);padding:24px 22px;margin:24px 0;border:1px solid rgba(108,92,231,0.08);text-align:center}
+.final-quiz .fq-title{font-size:16px;font-weight:700;color:var(--text-dark);margin-bottom:10px}
+.final-quiz .fq-options{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+.final-quiz .fq-btn{padding:10px 22px;border:2px solid rgba(108,92,231,0.12);border-radius:var(--radius-md);background:#fff;font-size:13px;font-weight:600;color:var(--text-dark);cursor:pointer;transition:var(--transition)}
+.final-quiz .fq-btn:hover{border-color:var(--primary);background:rgba(108,92,231,0.04)}
+.final-quiz .fq-btn.chosen{border-color:var(--primary);background:var(--primary);color:#fff}
+.final-quiz .fq-result{margin-top:14px;padding:14px;border-radius:var(--radius-md);background:rgba(108,92,231,0.06);display:none;font-size:13px;color:var(--text-mid);line-height:1.7}
+.final-quiz .fq-result.show{display:block;animation:fadeUp 0.4s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== 滑动对比（已有） ===== */
+.cmp-wrap{background:rgba(255,255,255,0.5);border:1px solid rgba(108,92,231,0.08);border-radius:var(--radius-md);overflow:hidden;position:relative}
+.cmp-inner{display:flex;position:relative;min-height:380px}
+.panel{padding:22px 20px;transition:width .08s linear}
+.pl{width:50%;background:linear-gradient(180deg,rgba(253,121,168,0.06),rgba(255,255,255,0.3))}
+.pr{width:50%;background:linear-gradient(180deg,rgba(0,184,148,0.06),rgba(255,255,255,0.3))}
+.ph{font-size:16px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px}.ph.r{color:var(--accent-red)}.ph.g{color:var(--accent-green)}
+.bl{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed rgba(108,92,231,0.08);font-size:13px;color:var(--text-mid)}
+.bl .a{font-weight:600}.bl .a.r{color:var(--accent-red)}.bl .a.g{color:var(--accent-green)}
+.bt{display:flex;justify-content:space-between;padding:10px 0 0;margin-top:6px;border-top:2px solid rgba(108,92,231,0.12);font-size:16px;font-weight:800}
+.bt .r{color:var(--accent-red)}.bt .g{color:var(--accent-green)}
+.bn{font-size:10px;color:var(--text-light);margin-top:4px}
+.slider-bar{position:absolute;top:0;bottom:0;left:50%;width:4px;background:linear-gradient(180deg,var(--primary),var(--accent-pink));cursor:ew-resize;z-index:10;transform:translateX(-2px)}
+.slider-bar::before{content:'⇄';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 4px 16px rgba(108,92,231,0.35);border:3px solid #fff}
+.switches{display:flex;justify-content:center;gap:6px;margin:10px 0;flex-wrap:wrap}
+.sw-btn{padding:6px 16px;border:1px solid rgba(108,92,231,0.15);background:rgba(255,255,255,0.5);color:var(--text-light);border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:var(--transition)}
+.sw-btn.on{background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-color:var(--primary);color:#fff}
+
+/* ===== 其他 ===== */
+.source-cluster{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.source-cluster span{font-size:10px;padding:4px 12px;border-radius:8px;background:rgba(108,92,231,0.06);color:var(--text-light)}
+.scroll-hint{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0.5;animation:fadeOut 1s ease-in 4s forwards;pointer-events:none}
+.scroll-hint span{font-size:10px;color:var(--text-light);letter-spacing:2px}
+.scroll-hint .mouse{width:18px;height:28px;border:2px solid var(--text-light);border-radius:12px;display:flex;justify-content:center;padding:4px 0}
+.scroll-hint .mouse .wheel{width:2px;height:5px;background:var(--primary);border-radius:3px;animation:scrollWheel 1.5s ease-in-out infinite}
+@keyframes scrollWheel{0%,100%{transform:translateY(0);opacity:1}50%{transform:translateY(6px);opacity:0.3}}
+@keyframes fadeOut{to{opacity:0;transform:translateX(-50%) translateY(10px)}}
+.edit-toggle{position:fixed;bottom:24px;right:24px;z-index:999;width:44px;height:44px;border-radius:50%;border:none;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:16px;cursor:pointer;box-shadow:0 4px 20px rgba(108,92,231,0.35);transition:var(--transition)}
+.edit-toggle:hover{transform:scale(1.12) rotate(15deg)}
+footer{text-align:center;padding:30px 0 0;color:var(--text-light);font-size:11px;border-top:1px solid rgba(108,92,231,0.08);margin-top:30px}
+.bg-deco{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;pointer-events:none;overflow:hidden}
+.bg-deco .circle{position:absolute;border-radius:50%;opacity:0.06}
+.bg-deco .circle:nth-child(1){width:400px;height:400px;background:var(--primary);top:-100px;right:-100px;animation:floatCircle 8s ease-in-out infinite}
+.bg-deco .circle:nth-child(2){width:300px;height:300px;background:var(--accent-pink);bottom:-50px;left:-80px;animation:floatCircle 10s ease-in-out infinite reverse}
+.bg-deco .circle:nth-child(3){width:200px;height:200px;background:var(--accent-orange);top:50%;left:50%;animation:floatCircle 12s ease-in-out infinite 2s}
+@keyframes floatCircle{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,-30px) scale(1.05)}66%{transform:translate(-20px,20px) scale(0.95)}}
+
+/* ===== 故事性增强 ===== */
+
+/* 五阶旅程地图 */
+.story-track{display:flex;align-items:center;justify-content:space-between;margin:28px 0 36px;padding:18px 12px;background:rgba(255,255,255,0.6);border-radius:var(--radius-lg);border:1px solid rgba(108,92,231,0.06);position:relative;overflow:hidden}
+.story-track::before{content:'';position:absolute;top:50%;left:8%;right:8%;height:3px;background:rgba(108,92,231,0.1);transform:translateY(-1.5px);border-radius:3px;z-index:0}
+.story-track .st-node{display:flex;flex-direction:column;align-items:center;gap:4px;position:relative;z-index:1;cursor:pointer;transition:var(--transition);flex:1}
+.story-track .st-node .st-dot{width:28px;height:28px;border-radius:50%;background:rgba(108,92,231,0.08);border:2px solid rgba(108,92,231,0.12);display:flex;align-items:center;justify-content:center;font-size:12px;transition:var(--transition)}
+.story-track .st-node.passed .st-dot{background:var(--accent-green);border-color:var(--accent-green);color:#fff;box-shadow:0 2px 12px rgba(0,184,148,0.25)}
+.story-track .st-node.active .st-dot{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 2px 12px rgba(108,92,231,0.3);animation:stPulse 2s ease-in-out infinite}
+@keyframes stPulse{0%,100%{box-shadow:0 2px 12px rgba(108,92,231,0.3)}50%{box-shadow:0 2px 20px rgba(108,92,231,0.5)}}
+.story-track .st-node .st-label{font-size:9px;color:var(--text-light);font-weight:600;white-space:nowrap;transition:color 0.3s}
+.story-track .st-node.passed .st-label{color:var(--accent-green)}
+.story-track .st-node.active .st-label{color:var(--primary)}
+
+/* 数字动员画 */
+.num-count{display:inline-block}
+.num-count.counted{animation:countPop 0.5s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes countPop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+/* 浮动表情 */
+.emoji-burst{position:relative;display:inline-block}
+.emoji-burst .eb-float{position:absolute;font-size:28px;opacity:0;pointer-events:none;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.emoji-burst .eb-float.show{opacity:1;transform:translateY(-30px) scale(1.2)}
+.emoji-burst .eb-float:nth-child(1){top:-10px;right:-40px}
+.emoji-burst .eb-float:nth-child(2){top:-20px;right:-10px;transition-delay:0.15s}
+
+/* 趣味事实卡 */
+.fun-fact{background:linear-gradient(135deg,rgba(253,121,168,0.06),rgba(253,203,110,0.06));border-radius:var(--radius-md);padding:14px 18px;margin:16px 0;border-left:3px solid var(--accent-orange);font-size:13px;color:var(--text-mid);line-height:1.7;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);cursor:default}
+.fun-fact.show{transform:translateY(0);opacity:1}
+.fun-fact:hover{background:rgba(253,121,168,0.1)}
+.fun-fact .ff-label{font-size:10px;font-weight:700;color:var(--accent-orange);letter-spacing:1px;margin-bottom:2px}
+
+/* 阶段间叙事桥接 */
+.narr-bridge{text-align:center;padding:24px 16px;margin:12px 0;position:relative;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.narr-bridge.show{transform:translateY(0);opacity:1}
+.narr-bridge .nb-icon{font-size:32px;margin-bottom:8px;display:block}
+.narr-bridge .nb-text{font-size:15px;font-weight:700;color:var(--text-dark);line-height:1.6}
+.narr-bridge .nb-sub{font-size:12px;color:var(--text-light);margin-top:4px}
+
+/* 闪亮强调 */
+.shine{background:linear-gradient(90deg,var(--text-dark),var(--primary),var(--text-dark));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shine 3s linear infinite}
+@keyframes shine{to{background-position:200% center}}
+
+/* 打字效果光标 */
+.type-cursor::after{content:'|';animation:blink 0.8s step-end infinite;color:var(--primary);font-weight:300}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* 跳动箭头 */
+.bounce-arrow{display:inline-block;animation:bounceA 1.5s ease-in-out infinite;font-size:20px}
+@keyframes bounceA{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+/* 悬停揭示 */
+.hover-reveal{position:relative;cursor:pointer;border-bottom:2px dashed var(--primary-light);transition:border-color 0.3s}
+.hover-reveal:hover{border-color:var(--primary)}
+.hover-reveal .hr-tip{position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%) scale(0.9);background:var(--text-dark);color:#fff;padding:6px 14px;border-radius:8px;font-size:11px;white-space:nowrap;opacity:0;pointer-events:none;transition:all 0.2s cubic-bezier(0.34,1.56,0.64,1)}
+.hover-reveal:hover .hr-tip{opacity:1;transform:translateX(-50%) scale(1)}
+
+/* 翻牌效果 */
+.flip-card{perspective:600px;margin:14px 0}
+.flip-card .fc-inner{position:relative;width:100%;min-height:60px;transition:transform 0.5s;transform-style:preserve-3d;cursor:pointer}
+.flip-card.flipped .fc-inner{transform:rotateX(180deg)}
+.flip-card .fc-front,.flip-card .fc-back{position:absolute;inset:0;backface-visibility:hidden;display:flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:600}
+.flip-card .fc-front{background:rgba(108,92,231,0.06);color:var(--primary);border:1px solid rgba(108,92,231,0.1)}
+.flip-card .fc-back{background:var(--primary);color:#fff;transform:rotateX(180deg);font-weight:500;font-size:12px;line-height:1.6}
+
+/* 情绪标签 */
+.mood-tag{display:inline-block;padding:3px 14px;border-radius:14px;font-size:12px;font-weight:700;letter-spacing:1px;margin:0 4px;transform:translateY(20px);opacity:0;transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+.mood-tag.show{transform:translateY(0);opacity:1}
+.mood-tag.mt-warm{background:rgba(253,203,110,0.2);color:#d68910}
+.mood-tag.mt-cool{background:rgba(162,155,254,0.15);color:var(--primary)}
+.mood-tag.mt-cold{background:rgba(108,92,231,0.1);color:var(--primary-dark)}
+.mood-tag.mt-blue{background:rgba(9,132,227,0.1);color:var(--accent-blue)}
+.mood-tag.mt-green{background:rgba(0,184,148,0.1);color:var(--accent-green)}
+
+/* 进度勋章 */
+.medal-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0}
+.medal{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;background:rgba(255,255,255,0.6);border:1px solid rgba(108,92,231,0.08);transition:var(--transition)}
+.medal.done{background:rgba(0,184,148,0.1);border-color:var(--accent-green);color:var(--accent-green)}
+.medal .medal-icon{font-size:16px}
+</style>
+</head>
+<body>
+
+<!-- ===== 加载页 ===== -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="ld-icon">📖</div>
+  <div class="ld-text">数据回溯中</div>
+  <div class="ld-sub">2021 — 2026 · 带你重新认识「学历与努力的价值」</div>
+  <div class="ld-bar-wrap"><div class="ld-bar" id="ldBar"></div></div>
+  <div class="ld-progress" id="ldProgress">0%</div>
+</div>
+
+<!-- 装饰背景 -->
+<div class="bg-deco"><div class="circle"></div><div class="circle"></div><div class="circle"></div></div>
+<!-- 进度条 -->
+<div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<!-- 浮动导航 -->
+<div class="float-nav">
+  <a href="education-value-analysis.html#s0" class="active"><span class="dot-tip">封面</span></a>
+  <a href="education-value-analysis.html#cogTest"><span class="dot-tip">认知测试</span></a>
+  <a href="education-value-analysis.html#s1"><span class="dot-tip">①笃信期</span></a>
+  <a href="education-value-analysis.html#s2"><span class="dot-tip">②隐忧期</span></a>
+  <a href="education-value-analysis.html#collapse"><span class="dot-tip">③崩塌期</span></a>
+  <a href="education-value-analysis.html#breakthrough"><span class="dot-tip">④破局期</span></a>
+  <a href="education-value-analysis.html#rebirth"><span class="dot-tip">⑤重生期</span></a>
+</div>
+<div class="scroll-hint" id="scrollHint"><div class="mouse"><div class="wheel"></div></div><span>向下滚动</span></div>
+
+<div class="container">
+
+<!-- ===== 认知测试弹窗 ===== -->
+<div class="cog-modal" id="cogModal">
+  <div class="cm-box">
+    <div class="cm-emoji">✅</div>
+    <div class="cm-title">认知存档成功</div>
+    <div class="cm-desc">接下来，我们将用五年真实市场数据，<br>验证你坚持多年的答案是否正确。</div>
+    <div class="cm-progress"><div class="cm-bar" id="cmBar"></div></div>
+  </div>
+</div>
+
+<!-- ===== 封面页 (Page 1) ===== -->
+<div class="header" id="s0">
+    <div class="cover-tag">【就业数据观察】</div>
+    <h1>研究生毕业薪资<br>不如进厂打工？</h1>
+    <div class="sub">五年学历通胀、技能升值双轨变迁<br>—— 当代青年读书性价比认知重塑实录</div>
+    
+</div>
+
+<div class="cover-guide" data-delay="0">
+    <strong>过去五年，我和身边的每个人一样，默认一条人生真理</strong>：读书吃苦、考研深造，未来一定更稳、更高薪。<br><br>
+    但2024年的一个夏日，我刷到一条热搜——<strong>「硕博就业率44.4%，低于专科56.6%」</strong>。<br>
+    我盯着屏幕愣了很久：我从小相信的「学历改变命运」，难道出错了？<br><br>
+    <span class="hl">到底是学历真的贬值了？还是我用旧认知，在看新市场？</span><br><br>
+    于是我花了几天时间，翻遍了智联招聘、中国薪酬网、教育部、人社厅的公开数据，<br>
+    把五年来的就业率、薪资、考研人数、各专业就业率全部拉出来，<br>
+    给自己算了三笔账——<strong>今天的年轻人，读书到底值不值</strong>。<br><br>
+    下面是我的发现。
+</div>
+
+<div style="text-align:center;margin:20px 0 36px">
+    <button class="cover-btn" onclick="document.getElementById('cogTest').scrollIntoView({behavior:'smooth'})">🎯 开始认知探索 →</button>
+</div>
+
+<!-- ===== 五阶旅程地图 ===== -->
+<div class="story-track" data-delay="100">
+    <div class="st-node active" data-stage="1"><div class="st-dot">🌤️</div><div class="st-label">笃信期</div></div>
+    <div class="st-node" data-stage="2"><div class="st-dot">🌫️</div><div class="st-label">隐忧期</div></div>
+    <div class="st-node" data-stage="3"><div class="st-dot">❄️</div><div class="st-label">崩塌期</div></div>
+    <div class="st-node" data-stage="4"><div class="st-dot">💠</div><div class="st-label">破局期</div></div>
+    <div class="st-node" data-stage="5"><div class="st-dot">🌿</div><div class="st-label">重生期</div></div>
+</div>
+
+<!-- ===== 认知自测页 (Page 2) ===== -->
+<section id="cogTest">
+<div class="cog-test" data-delay="0">
+    <div class="ct-title">🧠 在看真相前，先看看你的固有认知</div>
+    <div class="ct-desc">
+        大部分人的迷茫，都来自这一句根深蒂固的惯性思维：<br>
+        <strong>「学历越高，薪资一定越高。」</strong><br><br>
+        请点击你的真实想法（选择后不可更改，模拟真实认知存档）
+    </div>
+    <div class="ct-options">
+        <button class="ct-btn" data-choice="A">A. 我相信：<br>高学历一定拥有更高收入</button>
+        <button class="ct-btn" data-choice="B">B. 我怀疑：<br>学历和薪资早已不成正比</button>
+    </div>
+</div>
+</section>
+
+<!-- ===== 阶段1：笃信期 · 2021 (Page 3) ===== -->
+<section id="s1">
+<div class="stage-header" data-delay="0">
+    <div class="st-badge" style="background:linear-gradient(135deg,#FDCB6E,#F39C12)">🌤️ 阶段 1 · 笃信期 · 2021</div>
+    <div class="st-title">「考研是最稳的出路」</div>
+    <div class="st-sub">2021年，学历=阶层、学历=薪资、学历=安全感——这条公式没人怀疑。无数人放弃实习、放弃就业，全身心投入备考。</div>
+</div>
+
+<div class="text-block" data-delay="50">
+    硕士应届生平均起薪<span class="big-num">8,500元</span>，远高于专科4,000元和本科5,500元。<br>
+    制造业蓝领薪资整体偏低，技能溢价尚未显现。<span class="hl">2021年：努力读书，确实是最稳妥的逆袭方式。</span>
+</div>
+
+<!-- 第1类图表：基础柱状图 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">📊</span>2021年不同学历应届生平均起薪阶梯图</div>
+    <div class="chart-desc">第 1 类图表 · 基础柱状图 · 学历越高薪资越高</div>
+    <div class="chart-box"><canvas id="chart2021"></canvas></div>
+    <div class="src-label">📎 数据来源：智联招聘《2021大学生就业力调研报告》</div>
+</div>
+
+<div class="fun-fact" data-delay="100">
+    <div class="ff-label">💡 冷知识</div>
+    2021年硕士起薪8,500元，是专科生的<strong>2.1倍</strong>。这个差距在四年后急剧缩小。
+</div>
+
+<div class="pull-quote" data-delay="100">
+    2021年：努力读书，确实是最稳妥的逆袭方式。
+    <div class="src">—— 阶段小结</div>
+</div>
+</section>
+
+<!-- ===== 叙事桥接 ===== -->
+<div class="narr-bridge" data-delay="50">
+    <span class="nb-icon">🔄</span>
+    <div class="nb-text">但我没想到，当年的美好会那么快结束</div>
+    <div class="nb-sub">我继续往下翻数据，发现2022—2023年，悄悄变了天……</div>
+</div>
+
+<!-- ===== 阶段2：隐忧期 · 2022-23 (Page 4) ===== -->
+<section id="s2">
+<div class="stage-header" data-delay="0" style="border-left-color:var(--text-mid)">
+    <div class="st-badge" style="background:linear-gradient(135deg,#b2bec3,#636e72)">🌫️ 阶段 2 · 隐忧期 · 2022-2023</div>
+    <div class="st-title">「隐约感觉不对劲」</div>
+    <div class="st-sub">2022到2023年，我身边的考研人数突然暴增。大家越卷越努力，却隐约感觉不对劲——研究生越来越多、上岸越来越难、读研成本越来越高。但每个人都在自我安慰：「只是竞争大了，学历含金量不会变。」</div>
+</div>
+
+<div class="text-block" data-delay="50">
+    所有人都看到了内卷，<span class="hl">没人看到正在到来的倒挂</span>。
+</div>
+
+<!-- 第2类图表：单轴折线图 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">📉</span>2021-2023年全国考研报名人数变化</div>
+    <div class="chart-desc">第 2 类图表 · 单轴折线图 · 折线持续上扬凸显内卷加剧</div>
+    <div class="chart-box tall"><canvas id="chartExam"></canvas></div>
+    <div class="src-label">📎 数据来源：教育部《2021-2023年全国教育事业发展统计公报》</div>
+</div>
+
+<div class="fun-fact" data-delay="100">
+    <div class="ff-label">💡 冷知识</div>
+    2021到2023年，考研报名人数暴增<strong>97万</strong>，相当于一个中型城市的人口全部加入考研大军。
+</div>
+
+<div class="pull-quote" data-delay="100" style="border-left-color:var(--text-mid)">
+    危机从不是突然降临，而是悄悄发生。
+    <div class="src">—— 阶段小结</div>
+</div>
+</section>
+
+<!-- ===== 叙事桥接 ===== -->
+<div class="narr-bridge" data-delay="50">
+    <span class="nb-icon">💥</span>
+    <div class="nb-text">我继续往下查，然后看到了让我最扎心的一张图</div>
+    <div class="nb-sub">2024年的数据出来的时候，说实话，我愣住了。</div>
+</div>
+
+<!-- ===== 阶段3：崩塌期 · 2024-25 (Page 5) ===== -->
+<section id="collapse">
+<div class="stage-header" data-delay="0">
+    <div class="st-badge">❄️ 阶段 3 · 崩塌期 · 2024-2025</div>
+    <div class="st-title">信仰崩塌：读研三年，不如进厂三年？</div>
+    <div class="st-sub">2024毕业季，文科硕士起薪平平、岗位稀少；而进厂做数控、电工的同龄人，月薪与就业率全面反超。网络彻底炸锅：「读书二十年，不如流水线三年。」</div>
+</div>
+
+<div class="text-block" data-delay="50">
+    <strong>看到这里，我停下来缓了缓。因为我也是那44.4%里面的一员——或者说，曾经坚信自己不会是那44.4%。</strong>
+</div>
+
+<!-- 核心冲突数据 -->
+<div class="data-spotlight">
+    <div class="ds-card" data-delay="50"><div class="ds-label">📉 硕博就业率（2024）</div><div class="ds-data red">44.4%</div><div class="ds-src">智联招聘</div></div>
+    <div class="ds-card" data-delay="100"><div class="ds-label">📈 专科就业率（2024）</div><div class="ds-data green">56.6%</div><div class="ds-src">智联招聘</div></div>
+    <div class="ds-card" data-delay="150"><div class="ds-label">📊 蓝领50分位薪资</div><div class="ds-data blue">≈文科硕士持平</div><div class="ds-src">广东省人社厅</div></div>
+    <div class="ds-card" data-delay="200"><div class="ds-label">📊 蓝领90分位薪资</div><div class="ds-data orange">超越文科硕士</div><div class="ds-src">广东省人社厅</div></div>
+</div>
+
+<!-- 第3类图表：分组柱状图 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">📊</span>2024年不同群体就业率对比图</div>
+    <div class="chart-desc">第 3 类图表 · 分组柱状图 · 硕博首次低于专科</div>
+    <div class="chart-box"><canvas id="barChart"></canvas></div>
+    <div class="src-label">📎 智联招聘《2024大学生就业力调研报告》</div>
+</div>
+
+<!-- 第4类图表：双轴折线图 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">📈</span>文科硕士 vs 熟练蓝领：五年月薪走势</div>
+    <div class="chart-desc">第 4 类图表 · 双轴折线图 · 一条线平了五年，柱越来越高</div>
+    <div class="chart-box tall"><canvas id="comboChart"></canvas></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="src-label">📎 中国薪酬网、广东省人社厅</span><span class="src-label">⚠️ 2025为估算值</span></div>
+</div>
+
+<div class="text-block" data-delay="50">
+    <span class="hl">中国薪酬网数据显示</span>：普通文科硕士起薪<strong>五年零涨幅</strong>，而技能岗位薪资连续五年上涨。<br>
+    我反复确认了三遍数据，不是统计口径的问题——是<span class="hl">整个市场估值逻辑的结构性翻转</span>。
+</div>
+
+<!-- 四维成本 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">🧮</span>四维创新成本对比</div>
+    <div class="chart-desc">我们不只比月薪，我们算年轻人真正的性价比</div>
+    <div class="cost-grid">
+        <div class="cost-item" data-delay="50">
+            <div class="ci-top"><span class="ico">⏳</span><div class="lb">时间成本</div><div class="num bl">3年</div></div>
+            <div class="ci-bar"><div class="cb-fill" style="background:var(--primary);width:0%"></div></div>
+            <div class="ds">读研脱产3年 vs 进厂积累3年工龄</div>
+        </div>
+        <div class="cost-item" data-delay="100">
+            <div class="ci-top"><span class="ico">💰</span><div class="lb">金钱成本</div><div class="num">≈10万</div></div>
+            <div class="ci-bar"><div class="cb-fill" style="background:var(--accent-red);width:0%"></div></div>
+            <div class="ds">学费+生活费数万投入 vs 直接收入积累</div>
+        </div>
+        <div class="cost-item" data-delay="150">
+            <div class="ci-top"><span class="ico">📉</span><div class="lb">机会成本</div><div class="num">≈21万</div></div>
+            <div class="ci-bar"><div class="cb-fill" style="background:var(--accent-orange);width:0%"></div></div>
+            <div class="ds">3年空白职场经验 vs 3年技能工龄溢价</div>
+        </div>
+        <div class="cost-item" data-delay="200">
+            <div class="ci-top"><span class="ico">🏁</span><div class="lb">起步成本</div><div class="num pu">—</div></div>
+            <div class="ci-bar"><div class="cb-fill" style="background:var(--primary-light);width:0%"></div></div>
+            <div class="ds">毕业从零求职 vs 熟练技工稳定高薪</div>
+        </div>
+    </div>
+</div>
+
+<!-- 滑动对比账单 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">🔄</span>三年账单：读研花的 vs 工作赚的</div>
+    <div class="chart-desc">左右滑动对比</div>
+    <div class="hint">👆 拖动中间滑块</div>
+    <div class="switches"><button class="sw-btn on" data-p="50">均衡</button><button class="sw-btn" data-p="30">看读研</button><button class="sw-btn" data-p="70">看工作</button></div>
+    <div class="cmp-wrap">
+        <div class="cmp-inner" id="cmpInner">
+            <div class="panel pl" id="pLeft">
+                <div class="ph r">📚 读研三年·投入</div>
+                <div class="bl"><span>学费</span><span class="a r">2.4万</span></div>
+                <div class="bl"><span>住宿费</span><span class="a r">0.36万</span></div>
+                <div class="bl"><span>生活费</span><span class="a r">5.4万</span></div>
+                <div class="bl"><span>书本资料</span><span class="a r">0.9万</span></div>
+                <div class="bl"><span>机会成本</span><span class="a r">21.0万</span></div>
+                <div class="bt"><span>总投入</span><span class="r">≈30.1万</span></div>
+            </div>
+            <div class="panel pr" id="pRight">
+                <div class="ph g">🔧 工作三年·收益</div>
+                <div class="bl"><span>月薪收入</span><span class="a g">21.6万</span></div>
+                <div class="bl"><span>技能补贴</span><span class="a g">0.6万</span></div>
+                <div class="bl"><span>年终奖</span><span class="a g">1.5万</span></div>
+                <div class="bl"><span>加班津贴</span><span class="a g">0.9万</span></div>
+                <div class="bl"><span>薪资涨幅</span><span class="a g">2.1万</span></div>
+                <div class="bt"><span>总收益</span><span class="g">≈26.7万</span></div>
+            </div>
+            <div class="slider-bar" id="sliderBar"></div>
+        </div>
+    </div>
+</div>
+
+<div class="collapse-quote" data-delay="50">
+    <div class="cq-text">真正的落差，从来不止工资，是整段人生节奏的错位。</div>
+    <div class="cq-sub">—— 五年变迁 · 认知重塑</div>
+</div>
+</section>
+
+<!-- ===== 阶段4：破局期 (Page 6) ===== -->
+<section id="breakthrough">
+<div class="stage-header" data-delay="0" style="border-left-color:var(--accent-blue)">
+    <div class="st-badge" style="background:linear-gradient(135deg,var(--accent-blue),var(--primary))">💠 阶段 4 · 破局期 · 2025后</div>
+    <div class="st-title">真相破局：不是学历贬值，是结构换序</div>
+    <div class="st-sub">崩塌之后，我让自己冷静下来，重新审视这五年的全部数据。慢慢地，一个完全不同的真相浮现出来……</div>
+</div>
+
+<div class="truth-grid">
+    <div class="truth-item" data-delay="50"><div class="ti-num">1</div><div class="ti-title">倒挂≠读书无用</div><div class="ti-desc">高薪蓝领拿的是技能稀缺溢价<br>不是学历不值钱，是没有技能的空学历不值钱</div></div>
+    <div class="truth-item" data-delay="100"><div class="ti-num">2</div><div class="ti-title">贬值的是「同质化学历」</div><div class="ti-desc">理工科、技术硕士依旧高薪稀缺<br>贬值的是泛滥、可替代的文科泛学历</div></div>
+    <div class="truth-item" data-delay="150"><div class="ti-num">3</div><div class="ti-title">市场完成结构性换血</div><div class="ti-desc">过去：学历稀缺→靠文凭赢<br>现在：技能稀缺→靠实力赢</div></div>
+</div>
+
+<!-- 第5类图表：饼图（矩形树图） -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">🥧</span>不同专业硕士就业率分布</div>
+    <div class="chart-desc">第 5 类图表 · 矩形树图 · 绿色=技术类 粉色=文科类</div>
+    <div class="stat-row">
+        <div class="stat-item"><div class="num gr">95%</div><div class="lb">计算机·最高</div></div>
+        <div class="stat-item"><div class="num re">70%</div><div class="lb">行政管理·最低</div></div>
+        <div class="stat-item"><div class="num am">25pp</div><div class="lb">最大差距</div></div>
+    </div>
+    <div class="unlock-row" style="text-align:center;margin:12px 0">
+        <button class="unlock-btn lk" id="unlockBtn">🔒 点击解锁 · 查看专业详情</button>
+    </div>
+    <div class="lk-content" id="lkContent">
+        <div class="chart-box xtall" id="treemapChart"></div>
+    </div>
+    <div class="legend-strip"><div class="leg"><div class="d" style="background:var(--accent-green)"></div>技术类</div><div class="leg"><div class="d" style="background:var(--accent-red)"></div>文科类</div></div>
+    <div class="src-label">📎 智联招聘 · 各高校2024届就业质量报告</div>
+</div>
+
+<!-- 逻辑流程图 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">🔗</span>结构性错配逻辑图解</div>
+    <div class="chart-desc">从扩招到薪资倒挂的完整传导链条</div>
+    <div class="flow-wrap">
+        <div class="flow-row">
+            <div class="fn s1"><span class="badge">①</span><span class="fi">🎓</span><div class="ft">高校扩招</div><div class="fd">文科设校成本低</div></div>
+            <div class="fa"><span>→</span></div>
+            <div class="fn s2"><span class="badge">②</span><span class="fi">⚖️</span><div class="ft">结构性错配</div><div class="fd">文科过剩⇄技能短缺</div></div>
+            <div class="fa"><span>→</span></div>
+            <div class="fn s3"><span class="fi">📉</span><div class="ft">文职岗位收缩</div><div class="fd">AI替代+企业降本</div></div>
+            <div class="fa"><span>↔</span></div>
+            <div class="fn s4"><span class="fi">🔧</span><div class="ft">技能缺口扩大</div><div class="fd">缺口≈2000万</div></div>
+            <div class="fa"><span>→</span></div>
+            <div class="fn s5"><span class="fi">💰</span><div class="ft">薪资倒挂形成</div><div class="fd">蓝领增速>白领</div></div>
+        </div>
+        <div class="flow-tags"><span>📊 文科硕就业率70-78%</span><span>🔬 技术硕就业率88-95%</span><span>📈 蓝领增速7.2%</span><span>🏭 缺口≈2000万</span></div>
+    </div>
+</div>
+
+<div class="conclusion-box" data-delay="50">
+    <div class="cb-label">🎯 最终破局结论</div>
+    <div class="cb-text">薪资倒挂，不是努力的骗局，是时代升级的信号。</div>
+    <div class="cb-sub">市场不再为「苦读书」付费，只为「不可替代的能力」付费。</div>
+</div>
+
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">✅</span>权威数据来源公示</div>
+    <div class="chart-desc">所有数据均可溯源验证</div>
+    <div class="source-cluster">
+        <span>📊 智联招聘</span><span>🐮 牛客网</span><span>💰 中国薪酬网</span><span>📈 薪智</span>
+        <span>🎓 教育部</span><span>🏛️ 国家统计局</span><span>📋 广东人社厅</span>
+    </div>
+</div>
+</section>
+
+<!-- ===== 阶段5：重生期 · 2026 (Page 7) ===== -->
+<section id="rebirth">
+<div class="stage-header" data-delay="0" style="border-left-color:var(--accent-green)">
+    <div class="st-badge" style="background:linear-gradient(135deg,var(--accent-green),var(--accent-blue))">🌿 阶段 5 · 重生期 · 2026</div>
+    <div class="st-title">认知重生：重新定义读书的性价比</div>
+    <div class="st-sub">花了整整一晚上看完所有数据后，我做了一个决定……</div>
+</div>
+
+<div class="text-block" data-delay="50">
+    <strong>三大全新青年认知</strong><br><br>
+    1️⃣ <span class="hl">学历是人生兜底的底线</span>——给你考公、进大厂、进平台的入场券。<br>
+    2️⃣ <span class="hl">技能是新时代破局的上限</span>——未来高薪赛道属于实操、技术、硬核能力。<br>
+    3️⃣ <span class="hl">真正高性价比的人生公式</span>——<strong>学历兜底，技能破局</strong>，两手兼备才是最优解。
+</div>
+
+<!-- 第6类图表：四象限矩阵图 -->
+<div class="chart-card" data-delay="100">
+    <div class="chart-title"><span class="ico">🎯</span>学历 × 技能价值四象限矩阵</div>
+    <div class="chart-desc">第 6 类图表 · 四象限矩阵图 · X轴=学历 Y轴=技能</div>
+    <div class="matrix-wrap">
+        <div style="text-align:center;font-size:11px;color:var(--text-light);font-weight:600;letter-spacing:1px;margin-bottom:6px">技能水平 ↑</div>
+        <div class="mx-grid">
+            <div class="mx-quad tl"><div class="mx-q-title">🔧 高技能·低学历</div><div class="mx-q-desc">资深蓝领、技术技工<br>薪资中高·替代性低</div><div class="mx-q-tag">稳健发展</div></div>
+            <div class="mx-quad tr"><div class="mx-q-title">⭐ 高技能·高学历</div><div class="mx-q-desc">技术专家、资深工程师<br>薪资上限最高 · 最优发展区间</div><div class="mx-q-tag">🎯 最优策略</div></div>
+            <div class="mx-quad bl"><div class="mx-q-title">🔻 低技能·低学历</div><div class="mx-q-desc">基础服务岗<br>薪资偏低·替代性强</div><div class="mx-q-tag">需提升</div></div>
+            <div class="mx-quad br"><div class="mx-q-title">📋 低技能·高学历</div><div class="mx-q-desc">通用文职岗<br>内卷严重·薪资增长乏力</div><div class="mx-q-tag">需加技能</div></div>
+        </div>
+        <div class="mx-label">学历水平 →</div>
+    </div>
+    <div class="src-label">📎 综合教育部、中国薪酬网五年趋势预测</div>
+</div>
+
+<!-- 终极选择题 -->
+<div class="final-quiz" data-delay="100">
+    <div class="fq-title">🎯 经历完整数据求真，你的新认知是？</div>
+    <div class="fq-options">
+        <button class="fq-btn" data-result="你选择了「学历依然核心，需要叠加技能」。✅ 这正是最优解的一半——学历是兜底，但还缺技能的翅膀。">A. 学历依然核心<br>需要叠加技能</button>
+        <button class="fq-btn" data-result="你选择了「技能优先，务实就业更重要」。✅ 技能确实是破局关键，但别忘了学历是进平台的入场券。">B. 技能优先<br>务实就业更重要</button>
+        <button class="fq-btn" data-result="你选择了「二者平衡、因人而异」。✅ 这是最成熟的认知——每个人的人生公式都不同，关键是认清自己在四象限中的位置。">C. 二者平衡<br>因人而异</button>
+    </div>
+    <div class="fq-result" id="fqResult"></div>
+</div>
+
+<!-- ===== 结语页 (Page 8) ===== -->
+<div class="conclusion-box" data-delay="50" style="border-color:var(--accent-green)">
+    <div class="cb-label">📖 写在最后 —— 我算完这笔账之后</div>
+    <div class="cb-text">这五年，崩塌的不是读书的价值，是我沿用了十几年的旧成功逻辑。</div>
+    <div class="cb-sub">
+        学历从来不是高薪的保证书，但它永远是年轻人最公平、最踏实的底牌。<br><br>
+        蓝领高薪也不是「读书无用」的证明，而是社会终于开始为真实技能、真实产出、真实稀缺价值付费。<br><br>
+        我不会因为一时薪资落差否定自己读过的书，也不会固守学历滤镜无视市场的变化。<br><br>
+        <strong style="color:var(--primary);font-size:16px">真正贬值的从来不是学历，是停留在旧时代认知里的自己。</strong><br><br>
+        读书的性价比，从来不止写在月薪表里。<br><br>
+        —— 这是我这几天查数据，最大的收获。
+    </div>
+</div>
+
+<div class="text-block" data-delay="50" style="text-align:center;padding:20px 0">
+    <span style="font-size:14px;color:var(--text-light)">💬 你认为现在读研的性价比高吗？<br>欢迎分享你的真实感受。</span>
+</div>
+
+<!-- ===== 进度勋章 ===== -->
+<div class="medal-row" data-delay="50">
+    <div class="medal done"><span class="medal-icon">🌟</span> 看完就业率</div>
+    <div class="medal done"><span class="medal-icon">🌟</span> 看完薪资走势</div>
+    <div class="medal done"><span class="medal-icon">🌟</span> 算完账单</div>
+    <div class="medal"><span class="medal-icon">⭐</span> 完成认知升级</div>
+</div>
+
+<!-- ===== 编辑按钮 & 页脚 ===== -->
+<button class="edit-toggle" id="editToggle" onclick="toggleEditMode()">✏️</button>
+<div class="edit-mode-bar" id="editBar" style="display:none;position:fixed;bottom:80px;right:24px;z-index:999;background:rgba(255,255,255,0.95);border:1px solid rgba(108,92,231,0.1);border-radius:var(--radius-md);padding:16px 20px;box-shadow:var(--shadow-lg);min-width:200px">
+    <div class="label" style="font-size:12px;color:var(--text-dark);margin-bottom:8px;font-weight:600">📝 编辑模式</div>
+    <div style="font-size:11px;color:var(--text-light);line-height:1.6">• 直接点击文字编辑<br>• 修改数值后更新图表</div>
+</div>
+
+<footer>
+    <p>📊 数据新闻 · 让数据说话，用事实破局</p>
+    <p style="margin-top:2px;">数据来源：智联招聘 · 中国薪酬网 · 广东省人社厅 · 新就业形态研究中心 · 各高校就业质量报告 · 教育部 · 人社部 | 2025</p>
+</footer>
+</div>
+
+<script>
+// ===== 加载页 =====
+(function(){
+    const bar = document.getElementById('ldBar'), prog = document.getElementById('ldProgress'), screen = document.getElementById('loadingScreen');
+    let p = 0;
+    const iv = setInterval(() => {
+        p += 2 + Math.random() * 3;
+        if (p >= 100) { p = 100; clearInterval(iv);
+            setTimeout(() => { screen.classList.add('hide'); }, 400);
+        }
+        bar.style.width = p + '%';
+        prog.textContent = Math.round(p) + '%';
+    }, 80);
+})();
+
+// ===== 状态变量 =====
+let barChartInstance, comboChartInstance, treemapInstance, chart2021Instance, chartExamInstance;
+let isUnlocked = false;
+
+// ===== 进度条 =====
+window.addEventListener('scroll', function(){
+  const st = window.scrollY, dh = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById('progressBar').style.width = (dh > 0 ? (st/dh)*100 : 0) + '%';
+  const sec = document.querySelectorAll('.stage-header, .header');
+  let aid = 's0';
+  sec.forEach(s => { const id = s.id || s.closest('[id]')?.id; if (id && s.getBoundingClientRect().top < window.innerHeight/2) aid = id; });
+  document.querySelectorAll('.float-nav a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + aid));
+}, {passive: true});
+
+// ===== 滚动动画 =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target, delay = parseInt(el.dataset.delay) || 0;
+      setTimeout(() => { el.classList.add('show'); }, delay);
+      observer.unobserve(el);
+    }
+  });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.text-block, .pull-quote, .section-divider, .chart-card, .stage-header, .truth-item, .ds-card, .collapse-quote, .conclusion-box, .cog-test, .mx-quad, .final-quiz, .narr-bridge, .fun-fact, .medal-row, .story-track, .cost-item').forEach(el => observer.observe(el));
+
+// ===== 故事旅程追踪 =====
+function updateStoryTrack(){
+    const stages = document.querySelectorAll('.st-node');
+    const sections = [
+        document.getElementById('s1'),     // 笃信期
+        document.getElementById('s2'),     // 隐忧期
+        document.getElementById('collapse'),// 崩塌期
+        document.getElementById('breakthrough'),// 破局期
+        document.getElementById('rebirth') // 重生期
+    ];
+    const scrollY = window.scrollY + window.innerHeight * 0.4;
+    let activeStage = 0;
+    sections.forEach((sec, i) => {
+        if (sec && sec.offsetTop <= scrollY) activeStage = i + 1;
+    });
+    stages.forEach((node, i) => {
+        node.classList.remove('active', 'passed');
+        if (i + 1 < activeStage) node.classList.add('passed');
+        else if (i + 1 === activeStage) node.classList.add('active');
+    });
+}
+window.addEventListener('scroll', updateStoryTrack, {passive: true});
+window.addEventListener('load', updateStoryTrack);
+
+// ===== 数字动画 =====
+function animateNumbers(){
+    document.querySelectorAll('.big-num, .ds-data').forEach(el => {
+        const text = el.textContent;
+        const num = parseFloat(text.replace(/[^0-9.]/g, ''));
+        if (!num || el.dataset.counted) return;
+        el.dataset.counted = 'true';
+        const isPercent = text.includes('%');
+        const isK = text.includes('k');
+        const step = Math.max(1, Math.floor(num / 30));
+        let current = 0;
+        const iv = setInterval(() => {
+            current += step;
+            if (current >= num) { current = num; clearInterval(iv); }
+            el.textContent = isPercent ? Math.round(current) + '%' : isK ? (current/1000).toFixed(1) + 'k' : Math.round(current).toString();
+            el.classList.remove('counted');
+            void el.offsetWidth;
+            el.classList.add('counted');
+        }, 30);
+    });
+}
+
+// Intersection observer for number counting
+const numObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateNumbers();
+            numObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.3 });
+document.querySelectorAll('.chart-card').forEach(el => numObserver.observe(el));
+// Also observe big-nums directly
+document.querySelectorAll('.big-num').forEach(el => {
+    if (el.closest('.chart-card')) return;
+    numObserver.observe(el);
+});
+
+// ===== Flip Card互动 =====
+document.addEventListener('click', function(e) {
+    const flip = e.target.closest('.flip-card');
+    if (flip) flip.classList.toggle('flipped');
+});
+
+// ===== 隐藏滚动提示增强 =====
+window.addEventListener('scroll', function hh(){ if(window.scrollY>100){ document.getElementById('scrollHint').style.display='none'; window.removeEventListener('scroll',hh); } }, {passive:true});
+
+// ===== 认知测试 =====
+document.querySelectorAll('.ct-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+        document.querySelectorAll('.ct-btn').forEach(b => b.classList.add('disabled'));
+        this.classList.add('chosen');
+        const modal = document.getElementById('cogModal');
+        modal.classList.add('show');
+        const bar = document.getElementById('cmBar');
+        setTimeout(() => { bar.style.width = '100%'; }, 100);
+        setTimeout(() => { modal.classList.remove('show');
+            document.getElementById('s1').scrollIntoView({behavior:'smooth'});
+        }, 2200);
+    });
+});
+
+// ===== 编辑模式 =====
+function toggleEditMode(){
+    const btn=document.getElementById('editToggle'),bar=document.getElementById('editBar');
+    const eds=document.querySelectorAll('[contenteditable]');
+    if(btn.classList.contains('on')){
+        btn.classList.remove('on');btn.textContent='✏️';bar.style.display='none';
+        eds.forEach(e=>e.removeAttribute('contenteditable'));
+    }else{
+        btn.classList.add('on');btn.textContent='✅';bar.style.display='block';
+        document.querySelectorAll('.text-block,.chart-title,.chart-desc,.pull-quote,.stage-header .st-title,.stage-header .st-sub,.conclusion-box .cb-text').forEach(t=>t.setAttribute('contenteditable','true'));
+    }
+}
+
+// ===== 隐藏滚动提示 =====
+window.addEventListener('scroll', function hh(){ if(window.scrollY>100){ document.getElementById('scrollHint').style.display='none'; window.removeEventListener('scroll',hh); } }, {passive:true});
+
+// ===== 初始化图表 =====
+function initCharts(){
+    const P = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+    const pc = P('--primary')||'#6C5CE7', pr = P('--accent-red')||'#E17055', pg = P('--accent-green')||'#00B894';
+
+    // 2021起薪柱状图
+    chart2021Instance = new Chart(document.getElementById('chart2021'), {
+        type:'bar', data:{labels:['专科','本科','硕士'], datasets:[{label:'起薪（元）',data:[4000,5500,8500],
+        backgroundColor:[P('--accent-blue')||'#0984E3', pc, pg], borderRadius:6, barPercentage:0.45}]},
+        options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff',titleColor:'#2D2D3A',bodyColor:'#63637A',borderColor:'rgba(108,92,231,0.1)',borderWidth:1,padding:12,cornerRadius:8,callbacks:{label:ctx=>'起薪: '+ctx.parsed.x+' 元'}}},
+        scales:{x:{beginAtZero:true,max:10000,grid:{color:'rgba(108,92,231,0.06)'},ticks:{callback:v=>v/1000+'k',color:'#A0A0B8',font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:13,weight:'600'},color:'#63637A'}}}}});
+
+    // 考研折线图
+    chartExamInstance = new Chart(document.getElementById('chartExam'), {
+        type:'line', data:{labels:['2021','2022','2023'], datasets:[{label:'考研报名人数（万）',data:[377,457,474],
+        borderColor:pr, backgroundColor:'rgba(225,112,85,0.06)', pointBackgroundColor:pr, pointBorderColor:'#fff', pointBorderWidth:3, pointRadius:7, borderWidth:3, fill:true, tension:0.15}]},
+        options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff',titleColor:'#2D2D3A',bodyColor:'#63637A',borderColor:'rgba(108,92,231,0.1)',borderWidth:1,padding:12,cornerRadius:8,callbacks:{label:ctx=>ctx.parsed.y+' 万人'}}},
+        scales:{y:{beginAtZero:true,max:600,grid:{color:'rgba(108,92,231,0.06)'},ticks:{callback:v=>v+'万',color:'#A0A0B8',font:{size:11}}},x:{grid:{display:false},ticks:{font:{size:12,weight:'600'},color:'#63637A'}}}}});
+
+    // 就业率柱状图
+    barChartInstance = new Chart(document.getElementById('barChart'), {
+        type:'bar', data:{labels:['硕博','本科','专科'], datasets:[{label:'就业率（%）',data:[44.4,45.4,56.6],
+        backgroundColor:[pr, pc, pg], borderRadius:6, barPercentage:0.45}]},
+        options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff',titleColor:'#2D2D3A',bodyColor:'#63637A',borderColor:'rgba(108,92,231,0.1)',borderWidth:1,padding:12,cornerRadius:8,callbacks:{label:ctx=>'就业率: '+ctx.parsed.x+'%'}}},
+        scales:{x:{beginAtZero:true,max:70,grid:{color:'rgba(108,92,231,0.06)'},ticks:{callback:v=>v+'%',color:'#A0A0B8',font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:13,weight:'600'},color:'#63637A'}}}}});
+
+    // 双轴组合图
+    comboChartInstance = new Chart(document.getElementById('comboChart'), {
+        type:'bar', data:{labels:['2021','2022','2023','2024','2025'], datasets:[
+        {label:'文科硕士月薪',type:'line',data:[6500,6500,6400,6500,6500],borderColor:'#FD79A8',backgroundColor:'rgba(253,121,168,0.06)',pointBackgroundColor:'#FD79A8',pointBorderColor:'#fff',pointBorderWidth:3,pointRadius:6,borderWidth:3,fill:true,tension:0.2,yAxisID:'y',order:1,
+        pointHoverRadius:8},
+        {label:'熟练蓝领月薪',type:'bar',data:[4800,5300,5800,6300,6800],backgroundColor:['rgba(0,184,148,0.3)','rgba(0,184,148,0.42)','rgba(0,184,148,0.54)','rgba(0,184,148,0.68)','rgba(0,184,148,0.85)'],borderRadius:5,yAxisID:'y1',order:2}]},
+        options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'top',labels:{color:'#63637A',font:{size:12,weight:'600'},padding:14,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{backgroundColor:'#fff',titleColor:'#2D2D3A',bodyColor:'#63637A',borderColor:'rgba(108,92,231,0.1)',borderWidth:1,padding:10,cornerRadius:8,callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+' 元/月'}}},
+        scales:{y:{type:'linear',position:'left',min:5500,max:7500,grid:{color:'rgba(108,92,231,0.06)'},ticks:{color:'#ddd',callback:v=>''},title:{display:true,text:'文科硕士月薪',color:'#FD79A8',font:{size:11}}},
+        y1:{type:'linear',position:'right',min:3000,max:8500,grid:{display:false},ticks:{color:'#ddd',callback:v=>''},title:{display:true,text:'熟练蓝领月薪',color:'#00B894',font:{size:11}}},
+        x:{grid:{display:false},ticks:{color:'#A0A0B8',font:{size:12,weight:'600'}}}}}});
+
+    // 矩形树图
+    renderTreemap();
+}
+
+function renderTreemap(){
+    const gCol = getComputedStyle(document.documentElement).getPropertyValue('--accent-green').trim() || '#00B894';
+    const rCol = getComputedStyle(document.documentElement).getPropertyValue('--accent-red').trim() || '#E17055';
+    const initData = [
+        {name:'计算机\n95%',value:95,category:'tech',itemStyle:{color:gCol,borderRadius:8,borderColor:'#fff',borderWidth:3}},
+        {name:'机械\n92%',value:92,category:'tech',itemStyle:{color:gCol,borderRadius:8,borderColor:'#fff',borderWidth:3}},
+        {name:'临床\n90%',value:90,category:'tech',itemStyle:{color:gCol,borderRadius:8,borderColor:'#fff',borderWidth:3}},
+        {name:'金融\n88%',value:88,category:'tech',itemStyle:{color:gCol,borderRadius:8,borderColor:'#fff',borderWidth:3}},
+        {name:'新闻\n78%',value:78,category:'art',itemStyle:{color:rCol,borderRadius:8,borderColor:'#fff',borderWidth:3}},
+        {name:'汉语言\n75%',value:75,category:'art',itemStyle:{color:rCol,borderRadius:8,borderColor:'#fff',borderWidth:3}},
+        {name:'行政\n70%',value:70,category:'art',itemStyle:{color:rCol,borderRadius:8,borderColor:'#fff',borderWidth:3}}
+    ];
+    if(treemapInstance) treemapInstance.dispose();
+    treemapInstance = echarts.init(document.getElementById('treemapChart'));
+    treemapInstance.setOption({
+        backgroundColor:'transparent', tooltip:{backgroundColor:'#fff',borderColor:'rgba(108,92,231,0.1)',borderWidth:1,textStyle:{color:'#2D2D3A',fontSize:13},formatter:p=>{
+            const c=p.data.category==='tech'?'🔬 技术类':'📖 文科类'; return '<div style="font-weight:700;font-size:15px;margin-bottom:4px">'+p.name.replace('\n',' ')+'</div><div>就业率: <strong style="color:'+(p.data.category==='tech'?gCol:rCol)+'">'+p.value+'%</strong></div><div style="color:#A0A0B8;font-size:12px">'+c+'</div>';}},
+        series:[{type:'treemap',width:'92%',height:'86%',left:'4%',top:'8%',roam:false,nodeClick:false,breadcrumb:{show:false},
+        label:{show:true,formatter:p=>p.name,color:'#fff',fontSize:14,fontWeight:'600',textShadowColor:'rgba(0,0,0,0.2)',textShadowBlur:4,position:'inside'},
+        levels:[{colorSaturation:[0.3,0.6],itemStyle:{borderColor:'#fff',borderWidth:3,gapWidth:3}}],data:initData,animationDuration:800}]});
+}
+
+// ===== 解锁按钮 =====
+const ubtn=document.getElementById('unlockBtn'),lkc=document.getElementById('lkContent');
+if(ubtn) ubtn.addEventListener('click',function(){
+    isUnlocked=!isUnlocked;
+    if(isUnlocked){lkc.classList.add('unlk');ubtn.innerHTML='🔓 已解锁 · 点击方块查看详情';ubtn.classList.remove('lk');ubtn.style.background='linear-gradient(135deg,var(--accent-green),#55EFC4)';ubtn.style.boxShadow='0 4px 16px rgba(0,184,148,0.3)'}
+    else{lkc.classList.remove('unlk');ubtn.innerHTML='🔒 点击解锁 · 查看专业详情';ubtn.classList.add('lk');ubtn.style.background='';ubtn.style.boxShadow=''}});
+
+// ===== 滑块 =====
+const sl=document.getElementById('sliderBar'),pl=document.getElementById('pLeft'),pr=document.getElementById('pRight'),ci=document.getElementById('cmpInner'),sbs=document.querySelectorAll('.sw-btn');
+let dr=false;
+function sp(p){p=Math.max(15,Math.min(85,p));if(pl)pl.style.width=p+'%';if(pr)pr.style.width=(100-p)+'%';if(sl)sl.style.left=p+'%'}
+if(sl){sl.addEventListener('mousedown',()=>{dr=true});document.addEventListener('mousemove',e=>{if(!dr||!ci)return;const r=ci.getBoundingClientRect();sp(((e.clientX-r.left)/r.width)*100)});document.addEventListener('mouseup',()=>{dr=false})}
+sbs.forEach(b=>{b.addEventListener('click',function(){sbs.forEach(x=>x.classList.remove('on'));this.classList.add('on');sp(parseFloat(this.dataset.p))})});
+sp(50);
+
+// ===== 最终问卷 =====
+document.querySelectorAll('.fq-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+        document.querySelectorAll('.fq-btn').forEach(b => b.classList.remove('chosen'));
+        this.classList.add('chosen');
+        const resultDiv = document.getElementById('fqResult');
+        resultDiv.textContent = this.dataset.result;
+        resultDiv.classList.add('show');
+    });
+});
+
+// ===== 启动 =====
+document.addEventListener('DOMContentLoaded', initCharts);
+window.addEventListener('load', function(){
+    if(!barChartInstance || !comboChartInstance || !treemapInstance) initCharts();
+});
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a391af697c42a230',t:'MTc4OTA3NzQxMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
