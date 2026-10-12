@@ -204,7 +204,7 @@ document.addEventListener('click',async e=>{
   e.preventDefault();e.stopImmediatePropagation();
   if(action==='preview-current'){const form=$('#noteForm'),n=notes.find(x=>x.id===form?.dataset.id)||{};showPreview(n,form);return}
   if(action==='preview-note'){const n=notes.find(x=>x.id===btn.dataset.id);if(n)showPreview(n);return}
-  if(action==='asset-open'){openEditor(btn.dataset.id);return}
+  if(action==='asset-open'){const n=notes.find(x=>x.id===btn.dataset.id);if(cloudState.member?.can_edit)openEditor(btn.dataset.id);else if(n)showPreview(n);return}
   if(action==='asset-move'||action==='asset-remove'){
     if(!cloudState.member?.can_edit)return;
     const n=notes.find(x=>x.id===btn.dataset.id);if(!n)return;
