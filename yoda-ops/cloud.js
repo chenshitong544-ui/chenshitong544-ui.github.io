@@ -90,6 +90,7 @@ function authView(){
   return `<section class="panel cloud-auth"><h2>当前账号尚未加入团队</h2><p>${esc(cloudState.user.email||'')} 已登录。请由负责人在「团队成员」中添加这个邮箱。</p><button class="btn" data-cloud="signout">换一个邮箱登录</button><p class="note">${esc(cloudState.error)}</p></section>`;
 }
 render=function(){
+  window.yodaMember=cloudState.member;
   originalRender();
   if(!cloudState.user||!cloudState.member?.active||cloudState.loading){
     $('#banner').innerHTML='';$('#mainActions').innerHTML='';$('#content').innerHTML=authView();return;
@@ -97,7 +98,7 @@ render=function(){
   const owner=cloudState.member.is_owner,local=cloudState.local.length;
   if(state.view==='assets')$('#content').innerHTML=renderAssets();
   $('#banner').innerHTML=`<div class="banner"><div><b>团队数据已同步</b>　登录：${esc(cloudState.member.display_name)} · ${esc(cloudState.user.email)}。同事刷新同一网址即可看到最新记录，在线更新也会自动刷新。${cloudState.error?`<br><b>连接提示：</b>${esc(cloudState.error)}`:''}${local&&owner?`<br>当前浏览器另有 ${local} 条旧记录：先备份，再手动导入共享库。`:''}</div><button class="btn small" data-cloud="signout">退出</button></div>`;
-  $('#mainActions').innerHTML=`<button class="btn" data-action="export-json">备份 JSON</button><button class="btn" data-action="export-csv">导出 CSV</button>${owner?'<button class="btn" data-action="import-json">导入 JSON</button><button class="btn" data-cloud="team">团队成员</button>':''}${owner&&local?'<button class="btn" data-cloud="local-backup">备份本机旧数据</button><button class="btn" data-cloud="local-import">导入本机旧数据</button>':''}${cloudState.member.can_edit?'<button class="btn primary" data-action="new">＋ 新建选题</button>':''}`;
+  $('#mainActions').innerHTML=`${cloudState.member.can_edit?'<button class="btn primary" data-action="new">＋ 新建选题</button>':''}<details class="manage-menu"><summary class="btn" aria-label="打开数据管理菜单">数据管理 ▾</summary><div class="manage-popover"><button type="button" data-action="export-json">备份共享数据 JSON</button><button type="button" data-action="export-csv">导出复盘 CSV</button>${owner?'<button type="button" data-action="import-json">导入 JSON</button><button type="button" data-cloud="team">团队成员</button>':''}${owner&&local?'<button type="button" data-cloud="local-backup">备份本机旧数据</button><button type="button" data-cloud="local-import">导入本机旧数据</button>':''}<small>内容编辑和审核请到选题板完成</small></div></details>`;
   if(!cloudState.member.can_edit){document.querySelectorAll('[data-action="edit"],[data-action="suggest"],[data-move]').forEach(x=>x.remove())}
   if(!owner){document.querySelectorAll('[data-action="publish"],[data-action="delete"]').forEach(x=>x.remove())}
   if(!cloudState.member.can_review){document.querySelectorAll('[data-action="review"]').forEach(x=>x.remove())}
