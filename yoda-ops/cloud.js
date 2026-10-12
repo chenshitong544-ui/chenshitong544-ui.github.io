@@ -56,7 +56,7 @@ async function connectUser(){
 function scheduleCloudRefresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(loadCloud,450)}
 function authView(){
   if(cloudState.loading)return '<section class="panel cloud-auth"><h2>正在连接共享工作台…</h2></section>';
-  if(!cloudState.user)return `<section class="panel cloud-auth"><h2>登录 Yoda 运营协作库</h2><p>团队成员使用自己的邮箱收取登录链接。被加入工作台后，才能查看选题、修改文案和记录审核。非 Supabase 组织邮箱需要先配置自有邮件发送服务。</p><form id="cloudLogin"><label for="cloudEmail">邮箱地址</label><div class="cloud-auth-row"><input id="cloudEmail" name="email" type="email" required placeholder="name@company.com"><button class="btn primary" type="submit">发送登录链接</button></div></form><p class="note">${esc(cloudState.error||'网页链接无需 ChatGPT 登录；编辑和审核使用邮箱确认身份。')}</p></section>`;
+  if(!cloudState.user)return `<section class="panel cloud-auth"><h2>登录 Yoda 运营协作库</h2><p>团队成员使用自己的邮箱收取登录链接。被加入工作台后，才能查看选题、修改文案和记录审核。非 Supabase 组织邮箱需要先配置自有邮件发送服务。</p><form id="cloudLogin"><label for="cloudEmail">邮箱地址</label><div class="cloud-auth-row"><input id="cloudEmail" name="email" type="email" required placeholder="name@company.com"><button class="btn primary" type="submit">发送登录链接</button></div></form><p class="note">${esc(cloudState.error||'网页链接无需 ChatGPT 登录；编辑和审核使用邮箱确认身份。')}</p>${cloudState.local.length?`<button class="btn" data-cloud="local-backup">下载本机旧数据（${cloudState.local.length} 条）</button>`:''}</section>`;
   return `<section class="panel cloud-auth"><h2>当前账号尚未加入团队</h2><p>${esc(cloudState.user.email||'')} 已登录。请由负责人在「团队成员」中添加这个邮箱。</p><button class="btn" data-cloud="signout">换一个邮箱登录</button><p class="note">${esc(cloudState.error)}</p></section>`;
 }
 render=function(){
