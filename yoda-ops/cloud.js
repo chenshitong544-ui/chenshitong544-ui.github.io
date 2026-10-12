@@ -56,7 +56,7 @@ async function connectUser(){
 function scheduleCloudRefresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(loadCloud,450)}
 function authView(){
   if(cloudState.loading)return '<section class="panel cloud-auth"><h2>正在连接共享工作台…</h2></section>';
-  if(!cloudState.user)return `<section class="panel cloud-auth"><h2>登录 Yoda 运营协作库</h2><p>同事使用自己的邮箱收取登录链接。被加入团队后，才能查看选题、修改文案和记录审核。</p><form id="cloudLogin"><label for="cloudEmail">邮箱地址</label><div class="cloud-auth-row"><input id="cloudEmail" name="email" type="email" required placeholder="name@company.com"><button class="btn primary" type="submit">发送登录链接</button></div></form><p class="note">${esc(cloudState.error||'网页链接无需 ChatGPT 登录；编辑和审核使用邮箱确认身份。')}</p></section>`;
+  if(!cloudState.user)return `<section class="panel cloud-auth"><h2>登录 Yoda 运营协作库</h2><p>团队成员使用自己的邮箱收取登录链接。被加入工作台后，才能查看选题、修改文案和记录审核。非 Supabase 组织邮箱需要先配置自有邮件发送服务。</p><form id="cloudLogin"><label for="cloudEmail">邮箱地址</label><div class="cloud-auth-row"><input id="cloudEmail" name="email" type="email" required placeholder="name@company.com"><button class="btn primary" type="submit">发送登录链接</button></div></form><p class="note">${esc(cloudState.error||'网页链接无需 ChatGPT 登录；编辑和审核使用邮箱确认身份。')}</p></section>`;
   return `<section class="panel cloud-auth"><h2>当前账号尚未加入团队</h2><p>${esc(cloudState.user.email||'')} 已登录。请由负责人在「团队成员」中添加这个邮箱。</p><button class="btn" data-cloud="signout">换一个邮箱登录</button><p class="note">${esc(cloudState.error)}</p></section>`;
 }
 render=function(){
@@ -153,7 +153,7 @@ async function importShared(items){
 async function openTeam(){if(!cloudState.member?.is_owner)return;
   const {data,error}=await cloud.from('yoda_members').select('*').order('created_at');
   if(error){toast(errorText(error));return}
-  $('#modalRoot').innerHTML=`<div class="modalback"><div class="modal" role="dialog" aria-modal="true" aria-label="团队成员"><div class="modalhead"><h2>团队成员</h2><button data-action="close" aria-label="关闭">×</button></div><div class="form"><p class="note">添加同事邮箱后，对方打开工作台，用这个邮箱收取登录链接。编辑与审核会记录登录身份；负责人确认发布。</p>${(data||[]).map(m=>`<div class="row"><div><b>${esc(m.display_name)}</b><small>${esc(m.email)} · ${m.is_owner?'负责人':m.active?'可编辑和审核':'已停用'}</small></div>${m.is_owner?'':`<button class="btn small" data-cloud="toggle-member" data-email="${esc(m.email)}" data-active="${m.active?'1':'0'}">${m.active?'停用':'启用'}</button>`}</div>`).join('')}<form id="cloudTeamForm"><div class="formgrid"><div class="field"><label>同事邮箱</label><input name="email" type="email" required></div><div class="field"><label>显示姓名</label><input name="display_name" required maxlength="80"></div></div><button class="btn primary" type="submit">添加成员</button></form></div><div class="modalfoot"><button class="btn" data-action="close">关闭</button></div></div></div>`;
+  $('#modalRoot').innerHTML=`<div class="modalback"><div class="modal" role="dialog" aria-modal="true" aria-label="团队成员"><div class="modalhead"><h2>团队成员</h2><button data-action="close" aria-label="关闭">×</button></div><div class="form"><p class="note">添加邮箱是工作台授权；Supabase 默认邮件仅发送给组织成员。其他同事登录前还需配置自有 SMTP 邮件服务。编辑与审核会记录登录身份；负责人确认发布。</p>${(data||[]).map(m=>`<div class="row"><div><b>${esc(m.display_name)}</b><small>${esc(m.email)} · ${m.is_owner?'负责人':m.active?'可编辑和审核':'已停用'}</small></div>${m.is_owner?'':`<button class="btn small" data-cloud="toggle-member" data-email="${esc(m.email)}" data-active="${m.active?'1':'0'}">${m.active?'停用':'启用'}</button>`}</div>`).join('')}<form id="cloudTeamForm"><div class="formgrid"><div class="field"><label>同事邮箱</label><input name="email" type="email" required></div><div class="field"><label>显示姓名</label><input name="display_name" required maxlength="80"></div></div><button class="btn primary" type="submit">添加成员</button></form></div><div class="modalfoot"><button class="btn" data-action="close">关闭</button></div></div></div>`;
 }
 // 捕获旧页面中直接写本地的按钮与状态变更，改由数据库执行。
 document.addEventListener('click',async e=>{
@@ -189,7 +189,7 @@ document.addEventListener('submit',async e=>{
     const email=String(fd.get('email')||'').trim().toLowerCase(),display_name=String(fd.get('display_name')||'').trim();
     if(!email||!display_name)return;
     const {error}=await cloud.from('yoda_members').insert({email,display_name,can_edit:true,can_review:true,active:true,is_owner:false});
-    if(error)toast('添加失败：'+errorText(error));else{toast('已添加，同事可用该邮箱登录');await openTeam()}
+    if(error)toast('添加失败：'+errorText(error));else{toast('已授权邮箱；请确认登录邮件服务可发送到该地址');await openTeam()}
   }
 },true);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&cloudState.user)loadCloud()});
