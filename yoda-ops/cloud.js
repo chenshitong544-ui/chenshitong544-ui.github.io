@@ -1,10 +1,11 @@
 if (!snapshot) {
-/* Yoda 小红书运营协作：只用公开 publishable key，实际权限由 Supabase RLS 和触发器控制。 */
+/* Yoda 小红书运营协作：免登录共享编辑。任何持有公开网址的人都可编辑。 */
 const cloud = window.supabase.createClient(
   'https://fzwutbqnytfioniknvvk.supabase.co',
-  'sb_publishable_KF9XWMa2wCaOCrUwQ_Fg9w_KIylSolI'
+  'sb_publishable_KF9XWMa2wCaOCrUwQ_Fg9w_KIylSolI',
+  {auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}}
 );
-const cloudState = {loading:true, user:null, member:null, error:'', syncing:false, local:readLocal()};
+const cloudState = {loading:true, member:{active:true,can_edit:true,can_review:true,can_publish:true,is_owner:false}, error:'', syncing:false, local:readLocal()};
 const originalRender = render;
 const originalCard = card;
 const originalOpenReview = openReview;
@@ -22,7 +23,7 @@ async function resolveAssets(){
     const {data,error}=await cloud.storage.from(ASSET_BUCKET).createSignedUrl(path,3600);
     if(!error&&data?.signedUrl)assetUrls.set(path,{url:data.signedUrl,expires:Date.now()+3500000});
   }));
-  if(cloudState.user&&cloudState.member?.active){render();const id=$('#noteForm')?.dataset.id;if(id)refreshAssetEditor(id)}
+  if(cloudState.member?.active){render();const id=$('#noteForm')?.dataset.id;if(id)refreshAssetEditor(id)}
 }
 function assetEditorHTML(n){
   const files=noteAssets(n);
@@ -53,7 +54,7 @@ function cloudNote(row,review){return {
   createdAt:row.created_at,updatedAt:row.updated_at,_cloudUpdatedAt:row.updated_at,updatedBy:row.updated_by
 }}
 async function loadCloud(){
-  if(!cloudState.user || !cloudState.member?.active)return;
+  if(!cloudState.member?.active)return;
   const [a,b]=await Promise.all([
     cloud.from('yoda_notes').select('*').order('created_at',{ascending:false}),
     cloud.from('yoda_reviews').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})
@@ -65,17 +66,8 @@ async function loadCloud(){
   cloudState.error='';cloudState.loading=false;render();
   resolveAssets();
 }
-async function connectUser(){
+async function connectShared(){
   cloudState.loading=true;render();
-  const {data:{session},error}=await cloud.auth.getSession();
-  if(error){cloudState.error=errorText(error);cloudState.loading=false;render();return}
-  cloudState.user=session?.user||null;
-  if(!cloudState.user){cloudState.member=null;cloudState.loading=false;render();return}
-  const email=(cloudState.user.email||'').toLowerCase();
-  const member=await cloud.from('yoda_members').select('*').eq('email',email).maybeSingle();
-  if(member.error){cloudState.error=errorText(member.error);cloudState.loading=false;render();return}
-  cloudState.member=member.data;
-  if(!member.data?.active){cloudState.loading=false;render();return}
   await loadCloud();
   cloudChannel?.unsubscribe();
   cloudChannel=cloud.channel('yoda-ops-updates')
@@ -84,29 +76,30 @@ async function connectUser(){
     .subscribe();
 }
 function scheduleCloudRefresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(loadCloud,450)}
-function authView(){
+function connectionView(){
   if(cloudState.loading)return '<section class="panel cloud-auth"><h2>正在连接共享工作台…</h2></section>';
-  if(!cloudState.user)return `<section class="panel cloud-auth"><h2>登录 Yoda 运营协作库</h2><p>团队成员使用自己的邮箱收取登录链接。被加入工作台后，才能查看选题、修改文案和记录审核。非 Supabase 组织邮箱需要先配置自有邮件发送服务。</p><form id="cloudLogin"><label for="cloudEmail">邮箱地址</label><div class="cloud-auth-row"><input id="cloudEmail" name="email" type="email" required placeholder="name@company.com"><button class="btn primary" type="submit">发送登录链接</button></div></form><p class="note">${esc(cloudState.error||'网页链接无需 ChatGPT 登录；编辑和审核使用邮箱确认身份。')}</p>${cloudState.local.length?`<button class="btn" data-cloud="local-backup">下载本机旧数据（${cloudState.local.length} 条）</button>`:''}</section>`;
-  return `<section class="panel cloud-auth"><h2>当前账号尚未加入团队</h2><p>${esc(cloudState.user.email||'')} 已登录。请由负责人在「团队成员」中添加这个邮箱。</p><button class="btn" data-cloud="signout">换一个邮箱登录</button><p class="note">${esc(cloudState.error)}</p></section>`;
+  return `<section class="panel cloud-auth"><h2>共享数据暂时无法连接</h2><p>${esc(cloudState.error||'稍后刷新页面重试。')}</p><button class="btn" type="button" data-cloud="reconnect">重新连接</button></section>`;
 }
 render=function(){
   window.yodaMember=cloudState.member;
   originalRender();
-  if(!cloudState.user||!cloudState.member?.active||cloudState.loading){
-    $('#banner').innerHTML='';$('#mainActions').innerHTML='';$('#content').innerHTML=authView();return;
+  if(cloudState.loading||cloudState.error){
+    $('#banner').innerHTML='';$('#mainActions').innerHTML='';$('#content').innerHTML=connectionView();return;
   }
-  const owner=cloudState.member.is_owner,local=cloudState.local.length;
+  const local=cloudState.local.length;
   if(state.view==='assets')$('#content').innerHTML=renderAssets();
-  $('#banner').innerHTML=`<div class="banner"><div><b>团队数据已同步</b>　登录：${esc(cloudState.member.display_name)} · ${esc(cloudState.user.email)}。同事刷新同一网址即可看到最新记录，在线更新也会自动刷新。${cloudState.error?`<br><b>连接提示：</b>${esc(cloudState.error)}`:''}${local&&owner?`<br>当前浏览器另有 ${local} 条旧记录：先备份，再手动导入共享库。`:''}</div><button class="btn small" data-cloud="signout">退出</button></div>`;
-  $('#mainActions').innerHTML=`${cloudState.member.can_edit?'<button class="btn primary" data-action="new">＋ 新建选题</button>':''}<details class="manage-menu"><summary class="btn" aria-label="打开数据管理菜单">数据管理 ▾</summary><div class="manage-popover"><button type="button" data-action="export-json">备份共享数据 JSON</button><button type="button" data-action="export-csv">导出复盘 CSV</button>${owner?'<button type="button" data-action="import-json">导入 JSON</button><button type="button" data-cloud="team">团队成员</button>':''}${owner&&local?'<button type="button" data-cloud="local-backup">备份本机旧数据</button><button type="button" data-cloud="local-import">导入本机旧数据</button>':''}<small>内容编辑和审核请到选题板完成</small></div></details>`;
+  $('#banner').innerHTML=`<div class="banner"><div><b>共享编辑已开启</b>　打开同一网址即可查看和编辑，修改会同步给其他人。任何拿到链接的人都能改选题、录入数据和填写审核姓名；姓名未经身份验证。${local?`<br>当前浏览器还有 ${local} 条旧本地记录，可先备份再选择导入。`:''}</div></div>`;
+  $('#mainActions').innerHTML=`<button class="btn primary" data-action="new">＋ 新建选题</button><details class="manage-menu"><summary class="btn" aria-label="打开数据管理菜单">数据管理 ▾</summary><div class="manage-popover"><button type="button" data-action="export-json">备份共享数据 JSON</button><button type="button" data-action="export-csv">导出复盘 CSV</button><button type="button" data-action="import-json">导入 JSON</button>${local?'<button type="button" data-cloud="local-backup">备份本机旧数据</button><button type="button" data-cloud="local-import">导入本机旧数据</button>':''}<small>内容编辑和审核请到选题板完成</small></div></details>`;
   if(!cloudState.member.can_edit){document.querySelectorAll('[data-action="edit"],[data-action="suggest"],[data-move]').forEach(x=>x.remove())}
-  if(!owner){document.querySelectorAll('[data-action="publish"],[data-action="delete"]').forEach(x=>x.remove())}
+  document.querySelectorAll('[data-action="delete"]').forEach(x=>x.remove());
   if(!cloudState.member.can_review){document.querySelectorAll('[data-action="review"]').forEach(x=>x.remove())}
 };
-card=function(n){let html=originalCard(n);if(!cloudState.member?.is_owner)html=html.replace(/<button class="btn small primary" data-action="publish"[^>]*>.*?<\/button>/,'');if(noteAssets(n).length)html=html.replace('<h3>',`<div class="asset-preview" data-cloud="preview-note" data-id="${esc(n.id)}">${assetImg(noteAssets(n)[0],'preview-image')}</div><span class="asset-count">${noteAssets(n).length} 张图片 · 点击封面预览</span><h3>`);return html};
+card=function(n){let html=originalCard(n);if(!cloudState.member?.can_publish)html=html.replace(/<button class="btn small primary" data-action="publish"[^>]*>.*?<\/button>/,'');if(noteAssets(n).length)html=html.replace('<h3>',`<div class="asset-preview" data-cloud="preview-note" data-id="${esc(n.id)}">${assetImg(noteAssets(n)[0],'preview-image')}</div><span class="asset-count">${noteAssets(n).length} 张图片 · 点击封面预览</span><h3>`);return html};
 const originalOpenEditor=openEditor;
 openEditor=function(id){
   originalOpenEditor(id);
+  // 免登录协作不提供删除，防止误删共享记录。
+  $('#noteForm [data-action="delete"]')?.remove();
   const n=id?notes.find(x=>x.id===id):null;
   const body=$('#fBody')?.closest('.field');
   if(body)body.insertAdjacentHTML('afterend',assetEditorHTML(n||{}));
@@ -130,7 +123,7 @@ saveNote=async function(form){
   if(!title||!CATEGORIES.includes(category)||!STATUSES.includes(status)){toast('请填写标题、栏目和状态。');return}
   if(url&&!/^https?:\/\//i.test(url)){toast('链接请以 https:// 开头。');return}
   if(scheduledAt&&!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(scheduledAt)){toast('计划时间格式不正确。');return}
-  if(status==='已发布'&&old?.status!=='已发布'){toast('请由负责人在已审核卡片确认发布。');return}
+  if(status==='已发布'&&old?.status!=='已发布'){toast('请先在待审核卡片记录通过，再确认发布。');return}
   const n={id:old?.id||crypto.randomUUID(),title:title.slice(0,160),category,status,
     angle:String(fd.get('angle')||'').trim().slice(0,1200),body:String(fd.get('body')||'').trim().slice(0,12000),
     scheduledAt,target:String(fd.get('target')||'').trim().slice(0,80),
@@ -147,19 +140,19 @@ addSuggestion=async function(index){
 openReview=function(id){
   if(!cloudState.member?.can_review){toast('当前账号没有审核权限');return}
   const n=notes.find(x=>x.id===id);
-  if(n?.updatedBy===cloudState.user?.id){toast('最后修改人不能审核自己的文案，请交给另一位同事。');return}
   originalOpenReview(id);
   const files=noteAssets(n),body=$('#reviewForm .review-body');
   if(body&&files.length)body.insertAdjacentHTML('afterend',`<div class="asset-editor"><h3>待审图片 · ${files.length} 张</h3><div class="asset-list">${files.map((a,i)=>`<div class="asset-tile">${assetImg(a)}<small>${i===0?'封面 · ':''}${esc(a.name||'配图')}</small></div>`).join('')}</div><div class="asset-toolbar"><button type="button" class="btn small" data-cloud="preview-note" data-id="${esc(n.id)}">预览图文整体效果</button></div></div>`);
-  const input=$('#reviewBy');if(input){input.value=cloudState.member.display_name;input.readOnly=true;input.required=false}
-  const note=$('#reviewForm .note');if(note)note.textContent='审核人由邮箱登录身份确认；正文或图片修改后，本次审核自动失效。';
+  const input=$('#reviewBy');if(input){input.value='';input.readOnly=false;input.required=true;input.placeholder='请输入实际审核同事的姓名'}
+  const note=$('#reviewForm .note');if(note)note.textContent='审核姓名由填写者输入，未经身份验证；正文或图片修改后，本次审核自动失效。';
 };
 saveReview=async function(form){
   const n=notes.find(x=>x.id===form.dataset.id);if(!n||n.status!=='待审核')return;
-  const fd=new FormData(form),decision=String(fd.get('decision')||''),comment=String(fd.get('comment')||'').trim().slice(0,2000);
+  const fd=new FormData(form),decision=String(fd.get('decision')||''),comment=String(fd.get('comment')||'').trim().slice(0,2000),reviewer_name=String(fd.get('by')||'').trim().slice(0,40);
   if(!['approved','changes'].includes(decision))return;
+  if(!reviewer_name){toast('请填写实际审核人的姓名');return}
   if(decision==='approved'&&!String(n.body||'').trim()){toast('请先补齐正文文案');return}
-  const {error}=await cloud.from('yoda_reviews').insert({note_id:n.id,decision,comment});
+  const {error}=await cloud.from('yoda_reviews').insert({note_id:n.id,decision,comment,reviewer_name});
   if(error){toast('审核失败：'+errorText(error));await loadCloud();return}
   closeModal();await loadCloud();toast(decision==='approved'?'审核通过已同步':'退回意见已同步');
 };
@@ -182,9 +175,9 @@ async function cloudDelete(id){const n=notes.find(x=>x.id===id);if(!n||!cloudSta
   if(error)toast('删除失败：'+errorText(error));else{closeModal();await loadCloud();toast('已删除')}
 }
 async function importShared(items){
-  if(!cloudState.member?.is_owner)return;
   const existing=new Set(notes.map(n=>n.id));let count=0;
   for(const item of items){if(existing.has(item.id))continue;
+    if(item.status==='已发布'){toast('历史已发布笔记请通过原有备份保存，不支持免登录导入。');continue}
     const copy={...item,review:null};
     const {error}=await cloud.from('yoda_notes').insert({id:copy.id,payload:cloudPayload(copy),status:copy.status});
     if(error){toast(`已导入 ${count} 条；下一条失败：${errorText(error)}`);await loadCloud();return}
@@ -227,12 +220,12 @@ document.addEventListener('click',async e=>{
     }
     return;
   }
-  if(action==='signout'){await cloud.auth.signOut();cloudChannel?.unsubscribe();cloudState.user=null;cloudState.member=null;notes=[];render();return}
+  if(action==='reconnect'){await connectShared();return}
   if(action==='team'){await openTeam();return}
   if(action==='local-backup'){download(`Yoda_本机旧数据_${localDate()}.json`,JSON.stringify({version:1,notes:cloudState.local},null,2),'application/json');return}
   if(action==='local-import'){if(!confirm(`将本机 ${cloudState.local.length} 条旧选题添加到共享库？已有相同 ID 会跳过。`))return;await importShared(cloudState.local);return}
   if(action==='toggle-member'){const active=btn.dataset.active!=='1';const {error}=await cloud.from('yoda_members').update({active}).eq('email',btn.dataset.email);if(error)toast(errorText(error));else openTeam();return}
-  if(action==='publish'){if(!cloudState.member?.is_owner){toast('仅负责人确认发布');return}if(confirm('确认这篇笔记已经在小红书发布？'))await cloudStatus(btn.dataset.id,'已发布');return}
+  if(action==='publish'){if(confirm('确认这篇笔记已经在小红书发布？请核对实际发布状态。'))await cloudStatus(btn.dataset.id,'已发布');return}
   if(action==='delete'){await cloudDelete(btn.dataset.id)}
 },true);
 document.addEventListener('change',async e=>{
@@ -241,7 +234,7 @@ document.addEventListener('change',async e=>{
     const input=e.target,files=[...input.files||[]],id=$('#noteForm')?.dataset.id;
     input.value='';if(!files.length||!cloudState.member?.can_edit||!id)return;
     const n=notes.find(x=>x.id===id);if(!n)return;
-    if(n.status==='已发布'&&!cloudState.member.is_owner){toast('已发布图片仅负责人可改');return}
+    if(n.status==='已发布'){toast('已发布图片暂不在协作页修改');return}
     if(noteAssets(n).length+files.length>9){toast('每条选题最多 9 张图片');return}
     const ext={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
     if(files.some(f=>!ext[f.type]||f.size>5*1024*1024||!f.size)){toast('仅支持 5 MB 以内的 JPG、PNG 或 WebP 图片');return}
@@ -267,21 +260,9 @@ document.addEventListener('change',async e=>{
   }
 },true);
 document.addEventListener('submit',async e=>{
-  if(e.target?.id==='cloudLogin'){
-    e.preventDefault();e.stopImmediatePropagation();const email=String(new FormData(e.target).get('email')||'').trim();
-    const {error}=await cloud.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-    toast(error?'发送失败：'+errorText(error):'登录邮件已发送，请在邮箱点击链接后回到工作台。');return;
-  }
-  if(e.target?.id==='cloudTeamForm'){
-    e.preventDefault();e.stopImmediatePropagation();const fd=new FormData(e.target);
-    const email=String(fd.get('email')||'').trim().toLowerCase(),display_name=String(fd.get('display_name')||'').trim();
-    if(!email||!display_name)return;
-    const {error}=await cloud.from('yoda_members').insert({email,display_name,can_edit:true,can_review:true,active:true,is_owner:false});
-    if(error)toast('添加失败：'+errorText(error));else{toast('已授权邮箱；请确认登录邮件服务可发送到该地址');await openTeam()}
-  }
+  // 主工作台无登录或成员授权表单。
 },true);
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&cloudState.user)loadCloud()});
-cloud.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='TOKEN_REFRESHED')setTimeout(()=>{if(event==='SIGNED_OUT'){cloudState.user=null;cloudState.member=null;notes=[];render()}else if(session?.user?.id!==cloudState.user?.id)connectUser()},0)});
-connectUser();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')loadCloud()});
+connectShared();
 
 }
