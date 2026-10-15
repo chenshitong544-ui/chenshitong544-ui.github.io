@@ -48,9 +48,10 @@ function cloudPayload(n){return {
   target:n.target||'',materials:n.materials||'',tags:n.tags||'',url:n.url||'',assets:noteAssets(n),
   publishedAt:n.publishedAt||null,metrics:n.metrics||{}
 }}
-function cloudNote(row,review){return {
+function cloudNote(row,review,reviewHistory){return {
   ...row.payload,id:row.id,status:row.status,revision:row.revision,
   review:review?{by:review.reviewer_name,decision:review.decision,comment:review.comment,at:review.created_at}:null,
+  reviewHistory:reviewHistory.map(item=>({by:item.reviewer_name,decision:item.decision,comment:item.comment,at:item.created_at,revision:item.revision})),
   createdAt:row.created_at,updatedAt:row.updated_at,_cloudUpdatedAt:row.updated_at,updatedBy:row.updated_by
 }}
 async function loadCloud(){
@@ -60,9 +61,14 @@ async function loadCloud(){
     cloud.from('yoda_reviews').select('*').order('created_at',{ascending:false}).order('id',{ascending:false})
   ]);
   if(a.error||b.error){cloudBusy('读取共享数据失败：'+errorText(a.error||b.error));return}
-  const reviewMap=new Map();
-  for(const item of b.data||[]){const k=item.note_id+':'+item.revision;if(!reviewMap.has(k))reviewMap.set(k,item)}
-  notes=(a.data||[]).map(row=>cloudNote(row,reviewMap.get(row.id+':'+row.revision)));
+  const reviewMap=new Map(),historyMap=new Map();
+  for(const item of b.data||[]){
+    const k=item.note_id+':'+item.revision;
+    if(!reviewMap.has(k))reviewMap.set(k,item);
+    if(!historyMap.has(item.note_id))historyMap.set(item.note_id,[]);
+    historyMap.get(item.note_id).push(item);
+  }
+  notes=(a.data||[]).map(row=>cloudNote(row,reviewMap.get(row.id+':'+row.revision),historyMap.get(row.id)||[]));
   cloudState.error='';cloudState.loading=false;render();
   resolveAssets();
 }
@@ -94,15 +100,23 @@ render=function(){
   document.querySelectorAll('[data-action="delete"]').forEach(x=>x.remove());
   if(!cloudState.member.can_review){document.querySelectorAll('[data-action="review"]').forEach(x=>x.remove())}
 };
-card=function(n){let html=originalCard(n);if(!cloudState.member?.can_publish)html=html.replace(/<button class="btn small primary" data-action="publish"[^>]*>.*?<\/button>/,'');if(noteAssets(n).length)html=html.replace('<h3>',`<div class="asset-preview" data-cloud="preview-note" data-id="${esc(n.id)}">${assetImg(noteAssets(n)[0],'preview-image')}</div><span class="asset-count">${noteAssets(n).length} 张图片 · 点击封面预览</span><h3>`);return html};
+function lastReturned(n){const latest=n.reviewHistory?.[0];return n.status==='制作中'&&latest?.decision==='changes'?latest:null}
+function reviewTime(at){const d=new Date(at);return Number.isNaN(d.getTime())?'时间未记录':d.toLocaleString('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'（北京时间）'}
+function reviewHistoryHTML(n){const history=n.reviewHistory||[];if(!history.length)return '';
+  return `<details class="review-history" open><summary>审核记录 · ${history.length} 条（保留历史意见）</summary>${history.map(r=>`<div class="review-history-item"><div><b>${r.decision==='changes'?'↩ 退回修改':'✓ 审核通过'}</b><span>${esc(r.by||'同事')} · ${esc(reviewTime(r.at))} · 第 ${Number(r.revision)||'?'} 版</span></div><p>${esc(r.comment||'未填写意见')}</p></div>`).join('')}</details>`;
+}
+card=function(n){let html=originalCard(n);if(!cloudState.member?.can_publish)html=html.replace(/<button class="btn small primary" data-action="publish"[^>]*>.*?<\/button>/,'');if(noteAssets(n).length)html=html.replace('<h3>',`<div class="asset-preview" data-cloud="preview-note" data-id="${esc(n.id)}">${assetImg(noteAssets(n)[0],'preview-image')}</div><span class="asset-count">${noteAssets(n).length} 张图片 · 点击封面预览</span><h3>`);const returned=lastReturned(n);if(returned&&n.review?.decision!=='changes')html=html.replace('<div class="topic-foot">',`<div class="review-badge returned">${esc(returned.by||'同事')}退回修改：${esc(returned.comment||'请查看审核记录')}</div><div class="topic-foot">`);return html};
 const originalOpenEditor=openEditor;
 openEditor=function(id){
   originalOpenEditor(id);
   // 免登录协作不提供删除，防止误删共享记录。
   $('#noteForm [data-action="delete"]')?.remove();
   const n=id?notes.find(x=>x.id===id):null;
+  const returned=n&&lastReturned(n);
+  if(returned)$('#noteForm .form')?.insertAdjacentHTML('afterbegin',`<div class="return-panel"><strong>↩ 同事退回 · 待我修改</strong><small>${esc(returned.by||'同事')} · ${esc(reviewTime(returned.at))}</small><p>${esc(returned.comment)}</p><button type="button" class="btn small" data-cloud="resubmit">改好后设为「待审核」</button></div>`);
   const body=$('#fBody')?.closest('.field');
   if(body)body.insertAdjacentHTML('afterend',assetEditorHTML(n||{}));
+  if(n)$('#noteForm .form')?.insertAdjacentHTML('beforeend',reviewHistoryHTML(n));
   if(n)resolveAssets();
 };
 // 旧逻辑不会再写浏览器；每项修改均请求共享数据库，失败后重新读取。
@@ -151,6 +165,7 @@ saveReview=async function(form){
   const fd=new FormData(form),decision=String(fd.get('decision')||''),comment=String(fd.get('comment')||'').trim().slice(0,2000),reviewer_name=String(fd.get('by')||'').trim().slice(0,40);
   if(!['approved','changes'].includes(decision))return;
   if(!reviewer_name){toast('请填写实际审核人的姓名');return}
+  if(decision==='changes'&&!comment){toast('退回修改请填写具体意见，方便制作人更正');return}
   if(decision==='approved'&&!String(n.body||'').trim()){toast('请先补齐正文文案');return}
   const {error}=await cloud.from('yoda_reviews').insert({note_id:n.id,decision,comment,reviewer_name});
   if(error){toast('审核失败：'+errorText(error));await loadCloud();return}
@@ -197,6 +212,7 @@ document.addEventListener('click',async e=>{
   const action=btn.dataset.cloud||btn.dataset.action;
   e.preventDefault();e.stopImmediatePropagation();
   if(action==='preview-current'){const form=$('#noteForm'),n=notes.find(x=>x.id===form?.dataset.id)||{};showPreview(n,form);return}
+  if(action==='resubmit'){const status=$('#fStatus');if(status){status.value='待审核';toast('已选择待审核，请完成修改并点击保存选题')}return}
   if(action==='preview-note'){const n=notes.find(x=>x.id===btn.dataset.id);if(n)showPreview(n);return}
   if(action==='asset-open'){const n=notes.find(x=>x.id===btn.dataset.id);if(cloudState.member?.can_edit)openEditor(btn.dataset.id);else if(n)showPreview(n);return}
   if(action==='asset-move'||action==='asset-remove'){
