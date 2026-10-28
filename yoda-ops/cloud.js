@@ -55,6 +55,7 @@ function cloudNote(row,review,reviewHistory){return {
   createdAt:row.created_at,updatedAt:row.updated_at,_cloudUpdatedAt:row.updated_at,updatedBy:row.updated_by
 }}
 async function loadCloud(){
+  if(window.yodaBulkDirty)return;
   if(!cloudState.member?.active)return;
   const [a,b]=await Promise.all([
     cloud.from('yoda_notes').select('*').order('created_at',{ascending:false}),
@@ -130,6 +131,18 @@ async function cloudSave(n,old){
   if(old&&(!data||!data.length)){toast('这篇笔记已被同事更新，请查看最新版后重试。');await loadCloud();return false}
   await loadCloud();return true;
 }
+window.yodaSaveBatch=async function(items){
+  if(!cloudState.member?.can_edit)throw Error('当前没有编辑权限');
+  let saved=0;
+  for(const next of items){
+    const old=notes.find(n=>n.id===next.id);
+    if(!old)throw Error('笔记不存在，请刷新后重试');
+    const {data,error}=await cloud.from('yoda_notes').update({payload:cloudPayload(next),status:old.status}).eq('id',old.id).eq('updated_at',old._cloudUpdatedAt).select('updated_at');
+    if(error||!data?.length)throw Error(`已保存 ${saved}/${items.length} 篇。${error?errorText(error):'有笔记被同事更新，请保留填数内容，刷新后核对重试。'}`);
+    Object.assign(old,{metrics:next.metrics,_cloudUpdatedAt:data[0].updated_at,updatedAt:data[0].updated_at});saved++;
+  }
+  window.yodaBulkDirty=false;await loadCloud();return saved;
+};
 saveNote=async function(form){
   const fd=new FormData(form),id=form.dataset.id,old=id?notes.find(x=>x.id===id):null;
   const title=String(fd.get('title')||'').trim(),category=String(fd.get('category')||''),status=String(fd.get('status')||'');
@@ -282,3 +295,4 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 connectShared();
 
 }
+

@@ -32,7 +32,7 @@ const SUGGESTIONS=[
  {title:'AI 审稿，为什么还要人工终审？',category:CATEGORIES[0],angle:'项目规则、AI 建议与运营最终判断',target:'了解产品',materials:'产品核验可公开规则、样例与复核记录',tags:'审核,人工复核'},
  {title:'想体验 Yoda？公测意向从这里开始',category:CATEGORIES[3],angle:'说明团队当前使用状态、拟议公测对象与可验证的体验任务；招募机制确认后开放登记',target:'明确留言申请试用',materials:'产品确认公测范围、名额、流程和正式入口',tags:'公测,试用,意向'}
 ];
-const HEADS={overview:['运营总览','先看待处理，再从日历检查发布时间和审核状态。','YODA / OPERATIONS'],topics:['选题板','记录内容角度、素材与审核状态，四类内容滚动推进。','CONTENT PIPELINE'],analytics:['数据可视化复盘','按相同观察窗口记录试用意向与赞藏评。','PERFORMANCE REVIEW'],competitors:['竞品账号观察','从置顶笔记与评论承接寻找可借鉴的招募结构。','ACCOUNT BENCHMARK']};
+const HEADS={overview:['运营总览','先看待处理，再从日历检查发布时间和审核状态。','YODA / OPERATIONS'],topics:['选题板','记录内容角度、素材与审核状态，四类内容滚动推进。','CONTENT PIPELINE'],analytics:['数据统计与周报','批量更新已发布笔记，每周保存一次，直接复制周报。','PERFORMANCE REVIEW'],competitors:['竞品账号观察','从置顶笔记与评论承接寻找可借鉴的招募结构。','ACCOUNT BENCHMARK']};
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>Number(n||0).toLocaleString('zh-CN');
@@ -46,7 +46,7 @@ const state={view:'overview',window:'7d',category:'全部',period:'全部',query
 function persist(){if(snapshot)return;try{localStorage.setItem(STORAGE_KEY,JSON.stringify(notes))}catch{toast('浏览器存储不可用，请先导出 JSON 备份。')}render()}
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.add('hidden'),4200)}
 function metric(n,w=state.window){const m=n.metrics?.[w];return m&&Number.isFinite(+m.views)?m:null}
-function published(){return notes.filter(n=>n.status==='已发布'&&n.publishedAt)}
+function published(){return notes.filter(n=>n.status==='已发布'&&n.publishedAt&&/^https?:\/\//i.test(n.url||''))}
 function visiblePublished(){return published().filter(n=>{if(state.category!=='全部'&&n.category!==state.category)return false;if(state.period==='全部')return true;let days=state.period==='近30天'?30:90;return new Date(n.publishedAt+'T00:00:00Z').getTime()>=Date.now()-days*86400000})}
 function dataset(){return visiblePublished().map(n=>({note:n,m:metric(n)})).filter(x=>x.m)}
 function totals(rows){return rows.reduce((a,{m})=>{for(let k of ['views','likes','saves','comments','shares'])a[k]+=Number(m[k]||0);for(let k of ['trialComments','applications','activated'])if(m[k]!=null&&Number.isFinite(Number(m[k]))){a[k]+=Number(m[k]);a[k+'Known']++}return a},{views:0,likes:0,saves:0,comments:0,shares:0,trialComments:0,applications:0,activated:0,trialCommentsKnown:0,applicationsKnown:0,activatedKnown:0})}
@@ -102,7 +102,7 @@ function openMetric(id,w=state.window){if(snapshot)return;const n=notes.find(x=>
 function closeModal(){$('#modalRoot').innerHTML=''}
 function download(name,content,type){let url=URL.createObjectURL(new Blob([content],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 function exportJson(){download(`Yoda_运营数据_${today()}.json`,JSON.stringify({version:1,exportedAt:new Date().toISOString(),notes},null,2),'application/json')}
-function exportCsv(){let rows=[['选题','栏目','状态','发布日期','主行动','链接','观察窗口','阅读','点赞','收藏','评论','分享','有效试用评论','完成申请','开通体验']];notes.forEach(n=>{let ms=n.metrics||{},keys=Object.keys(ms);if(!keys.length)rows.push([n.title,n.category,n.status,n.publishedAt||'',n.target||'',n.url||'','','','','','','','','','']);else keys.forEach(w=>{let m=ms[w];rows.push([n.title,n.category,n.status,n.publishedAt||'',n.target||'',n.url||'',w,m.views,m.likes,m.saves,m.comments,m.shares,m.trialComments??'',m.applications??'',m.activated??''])})});let csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\r\n');download(`Yoda_运营数据_${today()}.csv`,csv,'text/csv;charset=utf-8')}
+function exportCsv(){let rows=[['选题','栏目','状态','发布日期','主行动','链接','观察窗口','阅读','点赞','收藏','评论','分享','有效试用评论','完成申请','开通体验']];notes.forEach(n=>{let ms=n.metrics||{},keys=Object.keys(ms).filter(k=>WINDOWS.includes(k)||k==='latest');if(!keys.length)rows.push([n.title,n.category,n.status,n.publishedAt||'',n.target||'',n.url||'','','','','','','','','','']);else keys.forEach(w=>{let m=ms[w];rows.push([n.title,n.category,n.status,n.publishedAt||'',n.target||'',n.url||'',w,m.views,m.likes,m.saves,m.comments,m.shares,m.trialComments??'',m.applications??'',m.activated??''])})});let csv='\uFEFF'+rows.map(row=>row.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\r\n');download(`Yoda_运营数据_${today()}.csv`,csv,'text/csv;charset=utf-8')}
 function toToken(data){let bytes=new TextEncoder().encode(JSON.stringify({version:1,notes:data})),s='';for(let i=0;i<bytes.length;i+=8192)s+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(s).replaceAll('+','-').replaceAll('/','_').replaceAll('=','')}
 function fromToken(token){if(!/^[A-Za-z0-9_-]+$/.test(token)||token.length>100000)throw Error('无效链接');let s=atob(token.replaceAll('-','+').replaceAll('_','/')+'='.repeat((4-token.length%4)%4));let bytes=Uint8Array.from(s,c=>c.charCodeAt(0)),data=JSON.parse(new TextDecoder().decode(bytes));if(!Array.isArray(data.notes)||data.notes.length>500||!data.notes.every(validNote))throw Error('数据格式不正确');return data.notes}
 async function share(){if(!notes.length){toast('先加入选题或录入数据，再生成快照。');return}let url=location.origin+location.pathname+'#share='+toToken(notes);if(url.length>18000){toast('内容较多，链接过长。请用 JSON 备份并分享文件。');return}try{await navigator.clipboard.writeText(url);toast('只读快照链接已复制。新编辑需重新生成链接。')}catch{prompt('复制只读快照链接',url)}}
@@ -181,6 +181,8 @@ render();
 if(shareError)toast('快照链接无效，已打开当前浏览器的工作台。');
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
-<script src="cloud.js?v=review-20261015"></script>
+<script src="cloud.js?v=batch-20261028"></script>
+<script src="bulk.js?v=20261028"></script>
 </body>
 </html>
+
