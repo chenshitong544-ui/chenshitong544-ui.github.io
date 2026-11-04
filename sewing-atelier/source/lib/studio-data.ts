@@ -1,0 +1,11 @@
+export type Entry={id:string;title:string;sample?:boolean;[key:string]:any};
+export type Workspace={inspirations:Entry[];patterns:Entry[];fabrics:Entry[];projects:Entry[];works:Entry[]};
+export const materials=['棉布','麻布','针织','纱与蕾丝','帆布','皮革'];
+export const stages=['准备裁片','缝合衣身','装袖与领','试穿调整','完成'];
+export const seed:Workspace={
+ inspirations:[{id:'i1',title:'把温柔的碎花，缝进日常',category:'包袋',tags:'拼布,自然色',note:'收集不同纹理与低饱和碎花。尝试用零碎布拼出一只小托特包。',art:'bag',sample:true},{id:'i2',title:'一件有小小立领的上衣',category:'娃衣',tags:'立领,混合天使',note:'先完成基础试样，再考虑领口装饰与袖口细节。',art:'blouse',sample:true},{id:'i3',title:'给零碎布，一个新去处',category:'小物',tags:'束口袋,余料',note:'用喜欢的棉布搭配素色里布，做一只收纳小袋。',art:'pouch',sample:true}],
+ patterns:[{id:'p1',title:'立领收腰上衣',category:'娃衣',size:'混合天使 · 中胸',version:'v0.1',status:'试缝中',template:'blouse',note:'胸围10、腰围6.7、臀围10.5cm。腰节与胸高为暂估，需试缝。原版附完整缝份。',sample:true},{id:'p2',title:'基础抽褶半裙',category:'娃衣',size:'混合天使 · 中胸',version:'v0.1',status:'待试缝',template:'skirt',note:'矩形抽褶裙练习版，后开口，腰头搭门。',sample:true},{id:'p3',title:'日常小托特',category:'包袋',size:'成品 18 × 20 × 6 cm',version:'v0.1',status:'待试缝',template:'bag',note:'基础箱底托特。先用试样检查容量和开口。',sample:true},{id:'p4',title:'小小束口袋',category:'小物',size:'成品约 10 × 14 cm',version:'v0.1',status:'待试缝',template:'pouch',note:'基础直线缝练习。纸样与文件可在新建纸样中上传保存。',sample:true}],
+ fabrics:materials.map((m,i)=>({id:'f'+(i+1),title:['蓝白小格棉布','鼠尾草亚麻','奶油罗纹针织','月光蕾丝','雾蓝帆布','焦糖皮革'][i],material:m,color:['#8a9daf','#949c89','#d8c9b6','#d6c1d1','#687786','#aa7957'][i],texture:['gingham','linen','knit','lace','canvas','leather'][i],length:[.8,1.2,.6,.5,1,.4][i],width:[110,140,150,110,145,60][i],location:['A-03','A-05','B-01','B-04','C-02','C-05'][i],cost:0,note:'示例布样，可删除并录入你的真实库存。',sample:true})),
+ projects:[{id:'j1',title:'立领上衣 · 第一次试缝',patternId:'p1',fabricIds:['f2'],step:0,notes:'先只做衣身试样，检查肩线、胸口和腰围。',photos:[],sample:true},{id:'j2',title:'把拼布灵感做成小包',patternId:'p3',fabricIds:['f1','f5'],step:0,notes:'先确认纸样大小，再裁正式布料。',photos:[],sample:true}],
+ works:[{id:'w1',title:'立领上衣',category:'娃衣',patternId:'p1',projectId:'j1',fabricIds:['f2'],art:'blouse',note:'展示用概念作品，等待你放入自己的第一件成品。',sample:true},{id:'w2',title:'日常拼布包',category:'包袋',patternId:'p3',fabricIds:['f1','f5'],art:'bag',note:'展示用概念作品。',sample:true},{id:'w3',title:'花间束口袋',category:'小物',patternId:'p4',fabricIds:['f1'],art:'pouch',note:'展示用概念作品。',sample:true}]
+};
