@@ -48,6 +48,7 @@ export default function Workbench() {
   const [accessNeeded, setAccessNeeded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notice, setNotice] = useState("");
+  const [shareLink, setShareLink] = useState("");
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("全部");
   const [person, setPerson] = useState("全部");
@@ -181,12 +182,13 @@ export default function Workbench() {
     try {
       const k = key;
       if (!k) throw Error("共享访问凭证暂不可用");
-      await navigator.clipboard.writeText(
+      const link =
         location.origin +
-          location.pathname +
-          "#access=" +
-          encodeURIComponent(k),
-      );
+        location.pathname +
+        "#access=" +
+        encodeURIComponent(k);
+      setShareLink(link);
+      await navigator.clipboard.writeText(link);
       setNotice("成员协作链接已复制");
       setTimeout(() => setNotice(""), 3500);
     } catch (e) {
@@ -409,6 +411,23 @@ export default function Workbench() {
               </button>
             )}
           </div>
+          {shareLink && (
+            <section className="share-panel" aria-label="共享链接">
+              <div>
+                <strong>成员协作链接</strong>
+                <p>持有完整链接的人可以查看和编辑工作台。</p>
+              </div>
+              <input
+                aria-label="成员协作链接"
+                readOnly
+                value={shareLink}
+                onFocus={(event) => event.target.select()}
+              />
+              <button className="button" onClick={() => setShareLink("")}>
+                收起链接
+              </button>
+            </section>
+          )}
           {notice && (
             <div className="notice" role="status">
               {notice}

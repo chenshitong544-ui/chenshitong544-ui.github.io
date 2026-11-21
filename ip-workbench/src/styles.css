@@ -1590,3 +1590,37 @@ tbody tr:hover {
     gap: 3px;
   }
 }
+
+.share-panel {
+  background: #fff;
+  border: 1px solid #d4dff4;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.share-panel strong {
+  font-size: 15px;
+}
+.share-panel p {
+  font-size: 12px;
+  color: #8795aa;
+  margin: 7px 0 0;
+}
+.share-panel input {
+  flex: 1;
+  min-width: 0;
+}
+.share-panel .button {
+  flex-shrink: 0;
+}
+@media (max-width: 850px) {
+  .share-panel {
+    flex-wrap: wrap;
+  }
+  .share-panel input {
+    flex-basis: 100%;
+  }
+}
