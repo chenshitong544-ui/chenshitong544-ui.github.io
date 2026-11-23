@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   browser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +26,7 @@ jobs:
       - name: Exercise video production workflow
         env:
           NODE_PATH: /tmp/ipwb-qa/node_modules
+          IPWB_SCREENSHOT_LOG: 'true'
         run: node ip-workbench/tests/browser.cjs
       - name: Save review screenshots
         if: always()

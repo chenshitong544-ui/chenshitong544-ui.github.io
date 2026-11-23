@@ -84,13 +84,18 @@ const assert = require("node:assert/strict");
   assert.equal([...db.values()].find(r=>r.kind==="report").values.views,1234);
   await page.locator('[data-nav="episodes"]').click();
   await fs.mkdir("ip-workbench/qa-artifacts",{recursive:true});
+  await page.locator(".episode-row").first().click();
   await page.screenshot({path:"ip-workbench/qa-artifacts/desktop.png",fullPage:true});
+  await page.locator('[data-nav="episodes"]').click();
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.locator(".episode-row").first().click();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.screenshot({path:"ip-workbench/qa-artifacts/mobile.png",fullPage:true});
   assert.deepEqual(errors,[]);
+  if(process.env.IPWB_SCREENSHOT_LOG==="true"){
+   for(const name of ["desktop","mobile"]){const data=(await fs.readFile("ip-workbench/qa-artifacts/"+name+".png")).toString("base64");for(let i=0;i<data.length;i+=40000)console.log("REVIEW:"+name+":"+String(i/40000)+":"+data.slice(i,i+40000))}
+  }
   console.log("PASS: episode creation, script split, shot asset upload/link, comment, versioning, conflict preserves form, publishing, monthly report, mobile overflow and runtime errors.");
  }catch(e){await fs.mkdir("ip-workbench/qa-artifacts",{recursive:true});await page.screenshot({path:"ip-workbench/qa-artifacts/failure.png",fullPage:true});console.error(e);process.exitCode=1}
  finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
