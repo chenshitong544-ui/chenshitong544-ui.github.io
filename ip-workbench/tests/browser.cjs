@@ -97,6 +97,6 @@ const assert = require("node:assert/strict");
    for(const name of ["desktop","mobile"]){const data=(await fs.readFile("ip-workbench/qa-artifacts/"+name+".png")).toString("base64");for(let i=0;i<data.length;i+=40000)console.log("REVIEW:"+name+":"+String(i/40000)+":"+data.slice(i,i+40000))}
   }
   console.log("PASS: episode creation, script split, shot asset upload/link, comment, versioning, conflict preserves form, publishing, monthly report, mobile overflow and runtime errors.");
- }catch(e){await fs.mkdir("ip-workbench/qa-artifacts",{recursive:true});await page.screenshot({path:"ip-workbench/qa-artifacts/failure.png",fullPage:true});console.error(e);process.exitCode=1}
+ }catch(e){await fs.mkdir("ip-workbench/qa-artifacts",{recursive:true});await page.screenshot({path:"ip-workbench/qa-artifacts/failure.png",fullPage:true});console.error(e);console.log("FAILURE-DOM:"+await page.locator("body").innerText());if(process.env.IPWB_SCREENSHOT_LOG==="true"){const data=(await fs.readFile("ip-workbench/qa-artifacts/failure.png")).toString("base64");for(let i=0;i<data.length;i+=40000)console.log("REVIEW:failure:"+String(i/40000)+":"+data.slice(i,i+40000))}process.exitCode=1}
  finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
 })();
