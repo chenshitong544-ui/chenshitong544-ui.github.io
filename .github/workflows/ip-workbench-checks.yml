@@ -1,0 +1,36 @@
+name: IP Workbench checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ip-workbench/**'
+      - '.github/workflows/ip-workbench-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check browser JavaScript syntax
+        run: node --check ip-workbench/video-workbench.js
+      - name: Install isolated browser test dependencies
+        run: npm install --prefix /tmp/ipwb-qa playwright@1.56.1 --no-audit --no-fund
+      - name: Install Chromium
+        run: node /tmp/ipwb-qa/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Exercise video production workflow
+        env:
+          NODE_PATH: /tmp/ipwb-qa/node_modules
+        run: node ip-workbench/tests/browser.cjs
+      - name: Save review screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ip-workbench-browser-review
+          path: ip-workbench/qa-artifacts
+          retention-days: 7

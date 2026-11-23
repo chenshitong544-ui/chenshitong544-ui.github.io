@@ -10,11 +10,11 @@ const kinds = [
   "resource",
   "monthplan",
   "report",
-  "content",
+  "content", "episode", "shot", "asset", "comment",
 ];
 const members = ["陈诗彤", "沈江琴", "温馨如"];
 const platforms = ["共用", "抖音", "小红书", "B站"];
-const statuses = ["待确认", "待开始", "进行中", "待审核", "已完成"];
+const statuses = ["待确认", "待开始", "进行中", "待审核", "已完成", "脚本准备", "素材制作", "剪辑中", "待发布", "已发布", "备选", "已采用", "需修改"];
 const mimeTypes: Record<string, string> = {
   pdf: "application/pdf",
   doc: "application/msword",
@@ -32,7 +32,7 @@ const mimeTypes: Record<string, string> = {
   md: "text/plain",
   csv: "text/csv",
   mp4: "video/mp4",
-  mp3: "audio/mpeg",
+  mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", ogg: "audio/ogg", webm: "video/webm", mov: "video/quicktime", gif: "image/gif",
 };
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("Origin");
@@ -143,6 +143,14 @@ Deno.serve(async (req: Request) => {
         )
       )
         return json({ error: "月报数据应为非负数或留空" }, 400);
+
+      const production = record.production || {};
+      const productionKeys = ["number","script","episodeId","order","duration","characters","scene","requirements","assetIds","review","prompt","version","versionGroup","targetId","publications"];
+      if(typeof production !== "object" || Array.isArray(production) || Object.keys(production).some(k=>!productionKeys.includes(k)) || JSON.stringify(production).length>100000) return json({error:"制作信息格式无效"},400);
+      for(const k of ["number","order","duration","version"]) if(production[k]!==undefined && (typeof production[k]!=="number" || !Number.isFinite(production[k]) || production[k]<0 || production[k]>100000)) return json({error:"制作编号或时长无效"},400);
+      for(const k of ["script","episodeId","characters","scene","review","prompt","versionGroup","targetId"]) if(production[k]!==undefined && (typeof production[k]!=="string" || production[k].length>(k==="script"?80000:10000))) return json({error:"制作文本过长"},400);
+      for(const k of ["requirements","assetIds"]) if(production[k]!==undefined && (!Array.isArray(production[k]) || production[k].length>200 || production[k].some((v:unknown)=>typeof v!=="string" || v.length>80))) return json({error:"素材关联格式无效"},400);
+      if(production.publications!==undefined && (!production.publications || typeof production.publications!=="object" || Array.isArray(production.publications) || Object.keys(production.publications).some(k=>!platforms.includes(k)) || Object.values(production.publications).some((v:any)=>!v || typeof v!=="object" || Array.isArray(v) || Object.keys(v).some(k=>!["title","url","date","status"].includes(k)) || Object.values(v).some(t=>typeof t!=="string" || t.length>2000)))) return json({error:"发布信息格式无效"},400);
       const clean = {
         id: record.id,
         kind: record.kind,
@@ -156,6 +164,7 @@ Deno.serve(async (req: Request) => {
         month: record.month || "",
         category: record.category || "",
         values,
+        production,
         fileId: record.fileId || "",
         fileName: record.fileName || "",
         url: record.url || "",
@@ -177,6 +186,22 @@ Deno.serve(async (req: Request) => {
       return json({
         record: { ...data[0].data, _etag: String(data[0].revision) },
       });
+    }
+
+    if (resource === "split" && req.method === "POST") {
+      const {episodeId,revision,blocks,editor,requestId} = await req.json();
+      if(!/^[a-zA-Z0-9-]{1,80}$/.test(episodeId||"") || !/^[a-zA-Z0-9-]{1,65}$/.test(requestId||"") || !members.includes(editor) || !Number.isSafeInteger(revision) || revision<1 || !Array.isArray(blocks) || blocks.length<1 || blocks.length>200 || blocks.some(b=>typeof b!=="string" || !b.trim() || b.length>30000)) return json({error:"请检查脚本分段与编辑人"},400);
+      const {data,error}=await admin.rpc("ipwb_create_shots",{p_episode:episodeId,p_revision:revision,p_blocks:blocks,p_editor:editor,p_request:requestId});
+      if(error) {if(/STALE_EPISODE|SHOTS_EXIST/.test(error.message)) return json({error:"本期刚被更新或已有分镜，请刷新检查"},409);throw error;}
+      return json({records:(data||[]).map((r:any)=>({...r.data,_etag:String(r.revision)}))});
+    }
+    if (resource === "attach" && req.method === "POST") {
+      const {shotId,assetId,editor}=await req.json();
+      if(!members.includes(editor) || !/^[a-zA-Z0-9-]{1,80}$/.test(shotId||"") || !/^[a-zA-Z0-9-]{1,80}$/.test(assetId||"")) return json({error:"素材关联信息无效"},400);
+      const {data,error}=await admin.rpc("ipwb_attach_asset",{p_shot:shotId,p_asset:assetId,p_editor:editor});
+      if(error)throw error;
+      if(!data?.length)return json({error:"镜头或素材已变更，请刷新"},409);
+      return json({record:{...data[0].data,_etag:String(data[0].revision)}});
     }
     if (resource === "files" && req.method === "POST") {
       if (Number(req.headers.get("Content-Length")) > 22 * 1024 * 1024)
